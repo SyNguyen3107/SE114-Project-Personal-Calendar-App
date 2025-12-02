@@ -1,4 +1,4 @@
-package com.synguyen.se114project.repository;
+package com.synguyen.se114project.data.repository;
 import android.app.Application;
 
 import androidx.lifecycle.LiveData;
@@ -6,7 +6,7 @@ import androidx.lifecycle.LiveData;
 import com.synguyen.se114project.data.entity.Subtask;
 import com.synguyen.se114project.data.entity.Task;
 import com.synguyen.se114project.data.dao.TaskDao;
-import com.synguyen.se114project.database.AppDatabase;
+import com.synguyen.se114project.data.database.AppDatabase;
 
 import java.util.List;
 public class TaskRepository {
@@ -66,6 +66,25 @@ public class TaskRepository {
     public void deleteSubtask(Subtask subtask) {
         AppDatabase.databaseWriteExecutor.execute(() -> {
             mTaskDao.deleteSubtask(subtask);
+        });
+    }
+    /**
+     * Hàm Combo: Lưu Task cha trước, lấy ID, rồi lưu Subtasks
+     */
+    public void insertTaskWithSubtasks(Task task, List<Subtask> subtasks) {
+        AppDatabase.databaseWriteExecutor.execute(() -> {
+            // 1. Lưu Task cha và lấy ID trả về
+            long taskId = mTaskDao.insertTask(task);
+
+            // 2. Gán ID đó cho tất cả Subtask con
+            for (Subtask sub : subtasks) {
+                sub.taskId = (int) taskId; // Ép kiểu long về int
+            }
+
+            // 3. Lưu danh sách Subtask
+
+            mTaskDao.insertSubtasks(subtasks);
+
         });
     }
 }

@@ -7,7 +7,7 @@ import androidx.lifecycle.LiveData;
 
 import com.synguyen.se114project.data.entity.Task;
 import com.synguyen.se114project.data.entity.Subtask;
-import com.synguyen.se114project.repository.TaskRepository;
+import com.synguyen.se114project.data.repository.TaskRepository;
 
 import java.util.List;
 
@@ -27,7 +27,9 @@ public class MainViewModel extends AndroidViewModel {
     public void insertTask(Task task) { mRepository.insert(task); }
     public void updateTask(Task task) { mRepository.update(task); }
     public void deleteTask(Task task) { mRepository.delete(task); }
-
+    public void saveTask(Task task, List<Subtask> subtasks) {
+        mRepository.insertTaskWithSubtasks(task, subtasks);
+    }
     // --- SUBTASK API ---
     // UI sẽ gọi hàm này khi bấm vào một Task để xem chi tiết
     public LiveData<List<Subtask>> getSubtasksOfTask(int taskId) {

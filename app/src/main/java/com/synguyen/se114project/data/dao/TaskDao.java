@@ -14,7 +14,7 @@ import java.util.List;
 @Dao
 public interface TaskDao {
     @Insert
-    void insertTask(Task task);
+    long insertTask(Task task);
 
     @Update
     void updateTask(Task task);
@@ -28,6 +28,8 @@ public interface TaskDao {
     // Phần SUBTASK
     @Insert
     void insertSubtask(Subtask subtask);
+    @Insert
+    void insertSubtasks(List<Subtask> subtasks);
 
     @Update
     void updateSubtask(Subtask subtask);

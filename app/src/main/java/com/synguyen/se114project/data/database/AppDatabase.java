@@ -1,4 +1,4 @@
-package com.synguyen.se114project.database;
+package com.synguyen.se114project.data.database;
 
 import android.content.Context;
 
