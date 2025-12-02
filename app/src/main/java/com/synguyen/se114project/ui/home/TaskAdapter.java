@@ -12,11 +12,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.synguyen.se114project.R;
 import com.synguyen.se114project.data.entity.Task;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskVH> {
 
-    private List<Task> items; // Biến lưu danh sách task hiện tại
+    private List<Task> items;
     private OnItemClickListener listener;
 
     public interface OnItemClickListener {
@@ -34,12 +37,13 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskVH> {
 
         public TaskVH(@NonNull View itemView) {
             super(itemView);
+            // Đảm bảo các ID này trùng khớp với file item_task.xml
             tvTitle = itemView.findViewById(R.id.tvTitle);
             tvSubTitle = itemView.findViewById(R.id.tvSubTitle);
             tvTime = itemView.findViewById(R.id.tvTime);
             tvTag = itemView.findViewById(R.id.tvTag);
             imgPriority = itemView.findViewById(R.id.imgPriority);
-            tvDate = itemView.findViewById(R.id.tvDate); // Ánh xạ ID mới thêm
+            tvDate = itemView.findViewById(R.id.tvDate);
         }
     }
 
@@ -60,10 +64,24 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskVH> {
         holder.tvTime.setText(t.getTime());
         holder.tvTag.setText(t.getTag());
 
-        // Gán dữ liệu ngày (Đảm bảo class Task đã có getter này)
-        holder.tvDate.setText(t.getDate());
+        // --- SỬA LỖI TẠI ĐÂY ---
+        // 1. Lấy timestamp (long)
+        long dateTimestamp = t.getDate();
 
-        holder.imgPriority.setAlpha(t.getPriority() > 0 ? 1f : 0.4f);
+        // 2. Chuyển đổi sang String ngày tháng (VD: 30/11/2025)
+        if (dateTimestamp > 0) {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+            String dateString = sdf.format(new Date(dateTimestamp));
+            holder.tvDate.setText(dateString);
+        } else {
+            holder.tvDate.setText(""); // Nếu không có ngày thì để trống
+        }
+        // -----------------------
+
+        // Xử lý hiển thị độ ưu tiên (Ví dụ: priority cao thì đậm, thấp thì mờ)
+        if (holder.imgPriority != null) {
+            holder.imgPriority.setAlpha(t.getPriority() > 1 ? 1f : 0.4f);
+        }
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onClick(t);
@@ -72,12 +90,11 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskVH> {
 
     @Override
     public int getItemCount() {
-        return items.size();
+        return (items != null) ? items.size() : 0; // Kiểm tra null cho an toàn
     }
 
-    // Hàm cập nhật danh sách khi lọc
     public void setTasks(List<Task> newTasks) {
-        this.items = newTasks; // Đã sửa tên biến khớp với khai báo ở trên
+        this.items = newTasks;
         notifyDataSetChanged();
     }
 }
