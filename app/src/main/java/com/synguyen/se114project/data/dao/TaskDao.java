@@ -40,4 +40,9 @@ public interface TaskDao {
     // Lấy danh sách Subtask của một Task cụ thể
     @Query("SELECT * FROM subtask_table WHERE task_id = :taskId")
     LiveData<List<Subtask>> getSubtasksOfTask(int taskId);
+
+    // Tìm các task nằm trong khoảng thời gian start -> end
+    // Sắp xếp theo độ ưu tiên (priority) giảm dần
+    @Query("SELECT * FROM task_table WHERE date >= :startOfDay AND date <= :endOfDay ORDER BY priority DESC")
+    LiveData<List<Task>> getTasksByDateRange(long startOfDay, long endOfDay);
 }

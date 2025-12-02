@@ -1,6 +1,6 @@
 package com.synguyen.se114project.data.repository;
 import android.app.Application;
-
+import java.util.Calendar;
 import androidx.lifecycle.LiveData;
 
 import com.synguyen.se114project.data.entity.Subtask;
@@ -86,5 +86,32 @@ public class TaskRepository {
             mTaskDao.insertSubtasks(subtasks);
 
         });
+    }
+    // Hàm API để ViewModel gọi
+    public LiveData<List<Task>> getTasksByDate(long dateTimestamp) {
+        long start = getStartOfDay(dateTimestamp);
+        long end = getEndOfDay(dateTimestamp);
+        return mTaskDao.getTasksByDateRange(start, end);
+    }
+    // Helper: Lấy 00:00:00
+    private long getStartOfDay(long time) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(time);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTimeInMillis();
+    }
+
+    // Helper: Lấy 23:59:59
+    private long getEndOfDay(long time) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(time);
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.SECOND, 59);
+        calendar.set(Calendar.MILLISECOND, 999);
+        return calendar.getTimeInMillis();
     }
 }

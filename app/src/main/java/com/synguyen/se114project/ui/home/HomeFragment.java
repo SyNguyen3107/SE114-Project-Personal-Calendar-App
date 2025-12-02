@@ -1,7 +1,6 @@
 package com.synguyen.se114project.ui.home;
 
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,7 +11,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -21,14 +19,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.synguyen.se114project.R;
-import com.synguyen.se114project.data.entity.Task;
 import com.synguyen.se114project.viewmodel.MainViewModel;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 public class HomeFragment extends Fragment {
@@ -43,17 +39,14 @@ public class HomeFragment extends Fragment {
 
     private TaskAdapter adapter;
 
-    // List chứa dữ liệu gốc từ Database
-    private List<Task> allTasks = new ArrayList<>();
-    // Ngày đang chọn (lưu dạng String "dd/MM/yyyy" để lọc dữ liệu)
-    private String selectedDateFilter = "";
+    // Biến lưu timestamp của ngày đang được chọn (để so sánh và highlight UI)
+    private long selectedDateTimestamp = 0;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        // Nạp layout mới của bạn
         return inflater.inflate(R.layout.fragment_home, container, false);
     }
 
@@ -61,7 +54,7 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // 1. Ánh xạ View theo ID mới trong XML
+        // 1. Ánh xạ View
         rvTasks = view.findViewById(R.id.rvTasks);
         llDatesContainer = view.findViewById(R.id.llDatesContainer);
         btnAdd = view.findViewById(R.id.btnAdd);
@@ -69,126 +62,79 @@ public class HomeFragment extends Fragment {
 
         // 2. Setup RecyclerView
         rvTasks.setLayoutManager(new LinearLayoutManager(requireContext()));
+        // Khởi tạo adapter rỗng ban đầu
         adapter = new TaskAdapter(new ArrayList<>(), task -> {
-            // Xử lý khi click vào task (VD: mở chi tiết để sửa)
-            Toast.makeText(getContext(), "Xem: " + task.getTitle(), Toast.LENGTH_SHORT).show();
-            // TODO: Thêm code chuyển trang kèm ID task tại đây
+            // Xử lý khi click vào item task (VD: Mở chi tiết)
+            Toast.makeText(getContext(), "Chọn: " + task.getTitle(), Toast.LENGTH_SHORT).show();
+            // TODO: Thêm logic điều hướng sang màn hình sửa task tại đây
         });
         rvTasks.setAdapter(adapter);
 
         // 3. Khởi tạo ViewModel
-//        mainViewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
-//
-//        // 4. Quan sát dữ liệu từ Database
-//        mainViewModel.getAllTasks().observe(getViewLifecycleOwner(), tasks -> {
-//            allTasks = tasks;
-//
-//            // Nếu chưa chọn ngày nào, mặc định chọn Hôm nay
-//            if (selectedDateFilter.isEmpty()) {
-//                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-//                selectedDateFilter = sdf.format(new Date());
-//            }
-//
-//            // Lọc dữ liệu và cập nhật tiêu đề
-//            filterTasksByDate(selectedDateFilter);
-//        });
-        allTasks = generateSampleTasks();
+        mainViewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
+
+        // 4. Quan sát dữ liệu ĐÃ ĐƯỢC LỌC từ ViewModel
+        // Bất cứ khi nào mainViewModel.setSelectedDate() được gọi, list này sẽ tự cập nhật
+        mainViewModel.getTasksBySelectedDate().observe(getViewLifecycleOwner(), tasks -> {
+            // Cập nhật lên RecyclerView
+            adapter.setTasks(tasks);
+
+            // Cập nhật tiêu đề (Ví dụ: "Nov 29th Tasks")
+            updateHeaderTitle(selectedDateTimestamp);
+        });
+
         // 5. Xử lý nút Thêm (+ Add Task)
         btnAdd.setOnClickListener(v -> {
             NavController navController = Navigation.findNavController(view);
-            // Đảm bảo bạn đã tạo action này trong nav_graph.xml
-            // Nếu chưa có Navigation, dùng Toast để test trước
 //            try {
+//                // Đảm bảo action này đã tồn tại trong nav_graph.xml
 //                navController.navigate(R.id.action_homeFragment_to_addEditFragment);
 //            } catch (Exception e) {
-                Toast.makeText(getContext(), "Chưa cấu hình Navigation!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Chưa có Navigation Action!", Toast.LENGTH_SHORT).show();
 //            }
         });
 
-        // 6. Tạo thanh lịch ngang (30 ngày tới)
+        // 6. Mặc định chọn ngày hôm nay khi mở màn hình lần đầu
+        if (selectedDateTimestamp == 0) {
+            selectedDateTimestamp = System.currentTimeMillis();
+            mainViewModel.setSelectedDate(selectedDateTimestamp);
+        }
+
+        // 7. Tạo thanh lịch ngang (30 ngày tới)
         populateDates(30);
     }
 
-    private List<Task> generateSampleTasks() {
-        List<Task> list = new ArrayList<>();
-
-        // Lấy ngày hiện tại để tạo dữ liệu mẫu luôn khớp với lịch
-        Calendar cal = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-        //thống nhất lưu ngày dạng Long (Timestamp - mili giây) để dễ sắp xếp và truy vấn.
-        long today = cal.getTimeInMillis();
-
-        cal.add(Calendar.DAY_OF_YEAR, 1);
-        long tomorrow = cal.getTimeInMillis();
-
-        // Dữ liệu cho HÔM NAY
-        list.add(new Task("Prepare project report", "Project Finance", today, "09:00", "In progress", 1));
-        list.add(new Task("Code review", "Backend", today, "11:30", "Review", 0));
-        list.add(new Task("Team meeting", "Sprint planning", today, "14:00", "Meeting", 0));
-
-        // Dữ liệu cho NGÀY MAI
-        list.add(new Task("Write unit tests", "Module X", tomorrow, "16:00", "To do", 2));
-        list.add(new Task("Update UI", "Frontend", tomorrow, "10:00", "To do", 1));
-
-        list.add(new Task("Write unit tests", "Module X", tomorrow, "16:00", "To do", 2));
-        list.add(new Task("Update UI", "Frontend", tomorrow, "10:00", "To do", 1));
-
-        return list;
+    // Hàm cập nhật tiêu đề Header dựa trên timestamp
+    private void updateHeaderTitle(long timestamp) {
+        if (timestamp == 0) return;
+        SimpleDateFormat outputFormat = new SimpleDateFormat("MMM dd 'Tasks'", Locale.ENGLISH);
+        String title = outputFormat.format(new Date(timestamp));
+        tvHeaderTitle.setText(title);
     }
 
-    // Hàm lọc danh sách Task theo ngày và cập nhật tiêu đề
-    private void filterTasksByDate(String dateToFilter) {
-        // 1. Lọc danh sách
-        List<Task> filteredList = new ArrayList<>();
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-
-        for (Task task : allTasks) {
-            String taskDateStr = sdf.format(new Date(task.getDate()));
-            if (taskDateStr.equals(dateToFilter)) {
-                filteredList.add(task);
-            }
-        }
-        adapter.setTasks(filteredList);
-
-        // 2. Cập nhật tiêu đề (Ví dụ: từ "30/11/2025" -> "Nov 30 Tasks")
-        updateHeaderTitle(dateToFilter);
-    }
-
-    private void updateHeaderTitle(String dateString) {
-        try {
-            SimpleDateFormat inputFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
-            Date date = inputFormat.parse(dateString);
-
-            // Định dạng hiển thị: "MMM dd Tasks" (VD: Nov 29 Tasks)
-            SimpleDateFormat outputFormat = new SimpleDateFormat("MMM dd 'Tasks'", Locale.ENGLISH);
-            String title = outputFormat.format(date);
-
-            tvHeaderTitle.setText(title);
-        } catch (Exception e) {
-            tvHeaderTitle.setText("Tasks");
-        }
-    }
-
-    //Hàm tạo ngày cho thanh cuộn ngang
     // Hàm tạo giao diện thanh chọn ngày
     private void populateDates(int days) {
         llDatesContainer.removeAllViews();
 
         Calendar cal = Calendar.getInstance();
+        // Reset về giờ hiện tại để lịch bắt đầu từ hôm nay
 
-        // Các định dạng ngày
         SimpleDateFormat sdfDay = new SimpleDateFormat("EEE", Locale.ENGLISH); // Mon
         SimpleDateFormat sdfDate = new SimpleDateFormat("dd", Locale.getDefault());  // 12
-        SimpleDateFormat sdfFull = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()); // 12/11/2025
 
         LayoutInflater inflater = LayoutInflater.from(requireContext());
 
+        // Helper để so sánh ngày (bỏ qua giờ phút giây)
+        Calendar selectedCal = Calendar.getInstance();
+        selectedCal.setTimeInMillis(selectedDateTimestamp);
+
         for (int i = 0; i < days; i++) {
+            long currentDateInMillis = cal.getTimeInMillis();
+
             String dayName = sdfDay.format(cal.getTime());
             String dateNum = sdfDate.format(cal.getTime());
-            String fullDate = sdfFull.format(cal.getTime());
 
-            // Nạp layout item_date.xml (File này bạn đã tạo ở bước trước)
+            // Nạp layout item_date.xml
             View itemView = inflater.inflate(R.layout.item_date, llDatesContainer, false);
 
             TextView tvDay = itemView.findViewById(R.id.tv_day_of_week);
@@ -197,11 +143,15 @@ public class HomeFragment extends Fragment {
             tvDay.setText(dayName);
             tvDate.setText(dateNum);
 
-            // Lưu ngày đầy đủ vào Tag để dùng sau này
-            itemView.setTag(fullDate);
+            // Lưu timestamp vào Tag để dùng khi click
+            itemView.setTag(currentDateInMillis);
 
-            // Highlight ngày đang chọn
-            if (fullDate.equals(selectedDateFilter)) {
+            // Kiểm tra xem có phải ngày đang chọn không để highlight
+            // So sánh ngày/tháng/năm
+            boolean isSameDay = cal.get(Calendar.YEAR) == selectedCal.get(Calendar.YEAR) &&
+                    cal.get(Calendar.DAY_OF_YEAR) == selectedCal.get(Calendar.DAY_OF_YEAR);
+
+            if (isSameDay) {
                 updateDateSelectionUI(itemView);
             } else {
                 resetDateSelectionUI(itemView);
@@ -218,23 +168,27 @@ public class HomeFragment extends Fragment {
                 // 2. Highlight ngày vừa chọn
                 updateDateSelectionUI(v);
 
-                // 3. Lọc dữ liệu
-                selectedDateFilter = (String) v.getTag();
-                filterTasksByDate(selectedDateFilter);
+                // 3. Lấy timestamp từ tag
+                long clickedDate = (long) v.getTag();
+                selectedDateTimestamp = clickedDate;
+
+                // Cập nhật Calendar so sánh để lần sau vẽ lại vẫn đúng
+                selectedCal.setTimeInMillis(selectedDateTimestamp);
+
+                // 4. GỌI VIEWMODEL ĐỂ LỌC DATABASE
+                mainViewModel.setSelectedDate(clickedDate);
             });
 
             llDatesContainer.addView(itemView);
 
-            // Tăng thêm 1 ngày
+            // Tăng thêm 1 ngày cho vòng lặp sau
             cal.add(Calendar.DAY_OF_YEAR, 1);
         }
     }
+
     // Hàm làm nổi bật ngày
     private void updateDateSelectionUI(View view) {
-        // SAI (Sẽ mất bo góc):
-        // view.setBackgroundColor(Color.parseColor("#6200EE"));
-
-        // ĐÚNG (Giữ nguyên bo góc):
+        // Sử dụng Drawable resource để giữ bo góc
         view.setBackgroundResource(R.drawable.bg_date_selected);
 
         TextView tvDay = view.findViewById(R.id.tv_day_of_week);
@@ -243,19 +197,16 @@ public class HomeFragment extends Fragment {
         tvDate.setTextColor(Color.WHITE);
     }
 
-    // Hàm trả về trạng thái bình thường
+    // Hàm bỏ chọn ngày
     private void resetDateSelectionUI(View view) {
-        // SAI (Sẽ mất bo góc):
-        // view.setBackgroundColor(Color.TRANSPARENT);
-
-        // ĐÚNG (Giữ nguyên bo góc):
+        // Sử dụng Drawable resource để giữ bo góc (màu trắng/trong suốt)
         view.setBackgroundResource(R.drawable.bg_date_unselected);
 
         TextView tvDay = view.findViewById(R.id.tv_day_of_week);
         TextView tvDate = view.findViewById(R.id.tv_date);
 
-        // Đổi lại màu chữ (đen hoặc xám)
-        tvDay.setTextColor(Color.parseColor("#757575")); // Màu xám nhạt cho Thứ
-        tvDate.setTextColor(Color.BLACK); // Màu đen cho Ngày
+        // Đặt màu xám/đen
+        tvDay.setTextColor(Color.parseColor("#757575"));
+        tvDate.setTextColor(Color.BLACK);
     }
 }
