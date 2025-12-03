@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- ID của item PHẢI TRÙNG KHỚP với ID trong nav_graph.xml -->
+
+    <item
+        android:id="@+id/homeFragment"
+        android:icon="@drawable/home"
+        android:title="Home" />
+
+    <item
+        android:id="@+id/scheduleFragment"
+        android:icon="@drawable/calendar"
+        android:title="Schedule" />
+
+    <item
+        android:id="@+id/profileFragment"
+        android:icon="@drawable/user"
+        android:title="Profile" />
+
+    <!-- Lưu ý: Bạn cần tạo các icon ic_home, ic_calendar, ic_profile
+         bằng cách chuột phải vào res/drawable -> New -> Vector Asset -->
+</menu>

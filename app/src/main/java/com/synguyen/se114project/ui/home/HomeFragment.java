@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.synguyen.se114project.R;
+import com.synguyen.se114project.ui.adapter.TaskAdapter;
 import com.synguyen.se114project.viewmodel.MainViewModel;
 
 import java.text.SimpleDateFormat;

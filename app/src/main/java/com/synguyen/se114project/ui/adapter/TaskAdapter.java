@@ -1,4 +1,4 @@
-package com.synguyen.se114project.ui.home;
+package com.synguyen.se114project.ui.adapter;
 
 import android.view.LayoutInflater;
 import android.view.View;
