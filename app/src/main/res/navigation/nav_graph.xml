@@ -3,24 +3,32 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/homeFragment"> <!-- Mặc định mở Home đầu tiên -->
+    app:startDestination="@id/homeFragment">
 
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.synguyen.se114project.ui.home.HomeFragment"
         android:label="Home"
         tools:layout="@layout/fragment_home">
-        <!-- Action để chuyển sang màn hình Thêm/Sửa Task -->
         <action
             android:id="@+id/action_homeFragment_to_addEditFragment"
-            app:destination="@id/action_homeFragment_to_addEditFragment" />
+            app:destination="@id/addEditFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_taskDetailFragment"
+            app:destination="@id/taskDetailFragment" />
     </fragment>
 
+    <!-- CẬP NHẬT TẠI ĐÂY: Thêm action cho ScheduleFragment -->
     <fragment
         android:id="@+id/scheduleFragment"
         android:name="com.synguyen.se114project.ui.schedule.ScheduleFragment"
         android:label="Schedule"
-        tools:layout="@layout/fragment_schedule" />
+        tools:layout="@layout/fragment_schedule">
+        <!-- Action chuyển sang màn hình Chi tiết -->
+        <action
+            android:id="@+id/action_scheduleFragment_to_taskDetailFragment"
+            app:destination="@id/taskDetailFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/profileFragment"
@@ -28,10 +36,21 @@
         android:label="Profile"
         tools:layout="@layout/fragment_profile" />
 
-    <!-- Màn hình AddEdit (sẽ làm sau) -->
-    <!--<fragment
+    <fragment
         android:id="@+id/addEditFragment"
         android:name="com.synguyen.se114project.ui.addedit.AddEditFragment"
-        android:label="Add Task" />-->
+        android:label="Add Task"
+        tools:layout="@layout/fragment_add_edit" />
+
+    <fragment
+        android:id="@+id/taskDetailFragment"
+        android:name="com.synguyen.se114project.ui.taskdetail.TaskDetailFragment"
+        android:label="Task Detail"
+        tools:layout="@layout/fragment_task_detail">
+        <argument
+            android:name="taskId"
+            android:defaultValue="-1L"
+            app:argType="long" />
+    </fragment>
 
 </navigation>

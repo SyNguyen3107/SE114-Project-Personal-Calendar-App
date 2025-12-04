@@ -11,6 +11,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -41,10 +43,22 @@ public class ScheduleFragment extends Fragment {
         calendarView = view.findViewById(R.id.calendarView);
         rvScheduleTasks = view.findViewById(R.id.rvScheduleTasks);
 
-        // 1. Setup RecyclerView (Tái sử dụng TaskAdapter từ Home)
+        // 1. Setup RecyclerView
         rvScheduleTasks.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        // --- XỬ LÝ CLICK ITEM TẠI ĐÂY ---
         adapter = new TaskAdapter(new ArrayList<>(), task -> {
-            Toast.makeText(getContext(), task.getTitle(), Toast.LENGTH_SHORT).show();
+            // Tạo Bundle chứa ID
+            Bundle bundle = new Bundle();
+            bundle.putLong("taskId", task.getId());
+
+            // Điều hướng sang TaskDetailFragment
+            NavController navController = Navigation.findNavController(view);
+            try {
+                navController.navigate(R.id.action_scheduleFragment_to_taskDetailFragment, bundle);
+            } catch (Exception e) {
+                Toast.makeText(getContext(), "Lỗi chuyển trang: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
         });
         rvScheduleTasks.setAdapter(adapter);
 
@@ -52,8 +66,6 @@ public class ScheduleFragment extends Fragment {
         mainViewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
 
         // 3. Quan sát dữ liệu
-        // Lưu ý: Vì Home và Schedule dùng chung ViewModel và chung biến selectedDate,
-        // nên khi đổi ngày ở đây, bên Home cũng đổi theo và ngược lại. Rất đồng bộ!
         mainViewModel.getTasksBySelectedDate().observe(getViewLifecycleOwner(), tasks -> {
             adapter.setTasks(tasks);
         });

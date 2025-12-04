@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingVertical="8dp"
+    android:paddingHorizontal="4dp"
+    android:gravity="center_vertical">
+
+    <CheckBox
+        android:id="@+id/cbSubtask"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:buttonTint="#304FFE"
+        android:minHeight="48dp"
+        android:minWidth="48dp"/>
+
+    <TextView
+        android:id="@+id/tvSubtaskTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Subtask content"
+        android:textSize="16sp"
+        android:textColor="#000000"
+        android:layout_marginStart="8dp"/>
+
+</LinearLayout>
