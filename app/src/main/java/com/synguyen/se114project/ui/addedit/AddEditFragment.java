@@ -7,6 +7,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,11 +21,14 @@ import androidx.navigation.Navigation;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.synguyen.se114project.R;
+import com.synguyen.se114project.data.entity.Subtask;
 import com.synguyen.se114project.data.entity.Task;
 import com.synguyen.se114project.viewmodel.MainViewModel;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 
 public class AddEditFragment extends Fragment {
@@ -32,14 +37,13 @@ public class AddEditFragment extends Fragment {
 
     // Views
     private TextInputEditText etTitle, etSubtitle;
-    private TextView btnDate, btnTime;
+    private TextView btnDate, btnTime, btnAddSubtask;
     private Button btnSave;
+    private LinearLayout layoutSubtasksContainer;
 
-    // Biến lưu dữ liệu tạm thời
+    // Data Temp
     private long selectedDateTimestamp = 0;
     private String selectedTimeString = "";
-
-    // Calendar để xử lý chọn ngày giờ
     private final Calendar calendar = Calendar.getInstance();
 
     @Nullable
@@ -59,39 +63,106 @@ public class AddEditFragment extends Fragment {
         btnTime = view.findViewById(R.id.btnTime);
         btnSave = view.findViewById(R.id.btnSave);
 
-        // 2. Khởi tạo ViewModel
+        // Subtask Views
+        btnAddSubtask = view.findViewById(R.id.btnAddSubtask);
+        layoutSubtasksContainer = view.findViewById(R.id.layoutSubtasksContainer);
+
+        // 2. ViewModel
         mainViewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
 
-        // 3. Mặc định chọn ngày giờ hiện tại
+        // 3. Khởi tạo mặc định
         updateDateDisplay(System.currentTimeMillis());
         updateTimeDisplay(calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
 
-        // 4. Sự kiện chọn Ngày
+        // 4. Sự kiện click
         btnDate.setOnClickListener(v -> showDatePicker());
-
-        // 5. Sự kiện chọn Giờ
         btnTime.setOnClickListener(v -> showTimePicker());
 
-        // 6. Sự kiện Lưu Task
+        // Sự kiện thêm dòng Subtask mới
+        btnAddSubtask.setOnClickListener(v -> addSubtaskInputRow(""));
+
+        // Sự kiện Lưu
         btnSave.setOnClickListener(v -> saveTask());
 
-        // Setup nút Back trên toolbar (nếu có)
-        view.findViewById(R.id.tvScreenTitle).setOnClickListener(v ->
-                Navigation.findNavController(view).navigateUp()
-        );
+        // Setup nút Back (Sử dụng ID btnBack mới trong XML)
+        View btnBack = view.findViewById(R.id.btnBack);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
+        }
     }
 
+    // Hàm thêm một dòng nhập liệu Subtask vào Container
+    private void addSubtaskInputRow(String content) {
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        View subtaskView = inflater.inflate(R.layout.item_input_subtask, layoutSubtasksContainer, false);
+
+        EditText etSubtaskName = subtaskView.findViewById(R.id.etSubtaskName);
+        View btnRemove = subtaskView.findViewById(R.id.btnRemoveSubtask);
+
+        etSubtaskName.setText(content);
+
+        // Xử lý nút xóa dòng này
+        btnRemove.setOnClickListener(v -> {
+            layoutSubtasksContainer.removeView(subtaskView);
+        });
+
+        layoutSubtasksContainer.addView(subtaskView);
+    }
+
+    private void saveTask() {
+        String title = etTitle.getText().toString().trim();
+        String subtitle = etSubtitle.getText().toString().trim();
+
+        // VALIDATE DỮ LIỆU
+        if (title.isEmpty()) {
+            etTitle.setError("Title cannot be empty");
+            etTitle.requestFocus();
+            return;
+        }
+
+        // Tạo Task cha
+        Task newTask = new Task(
+                title,
+                subtitle,
+                selectedDateTimestamp,
+                selectedTimeString,
+                "General",
+                1
+        );
+
+        // Thu thập danh sách Subtask từ giao diện
+        List<Subtask> subtaskList = new ArrayList<>();
+
+        // Duyệt qua tất cả các view con trong Container
+        for (int i = 0; i < layoutSubtasksContainer.getChildCount(); i++) {
+            View row = layoutSubtasksContainer.getChildAt(i);
+            EditText etName = row.findViewById(R.id.etSubtaskName);
+            String subtaskTitle = etName.getText().toString().trim();
+
+            // Chỉ thêm nếu tên subtask không rỗng
+            if (!subtaskTitle.isEmpty()) {
+                // taskId tạm thời là 0, Repository sẽ xử lý gán ID thật sau
+                subtaskList.add(new Subtask(0, subtaskTitle));
+            }
+        }
+
+        // Gọi ViewModel lưu tất cả (Hàm này bạn đã viết ở bước trước trong MainViewModel)
+        mainViewModel.saveTask(newTask, subtaskList);
+
+        Toast.makeText(getContext(), "Task saved successfully!", Toast.LENGTH_SHORT).show();
+        Navigation.findNavController(requireView()).popBackStack();
+    }
+
+    // --- Các hàm hỗ trợ Date/Time Picker ---
     private void showDatePicker() {
         DatePickerDialog datePicker = new DatePickerDialog(
                 requireContext(),
                 (view, year, month, dayOfMonth) -> {
                     calendar.set(year, month, dayOfMonth);
-                    // Reset giờ phút giây về 0 để lưu đúng mốc ngày
                     calendar.set(Calendar.HOUR_OF_DAY, 0);
                     calendar.set(Calendar.MINUTE, 0);
                     calendar.set(Calendar.SECOND, 0);
                     calendar.set(Calendar.MILLISECOND, 0);
-
                     updateDateDisplay(calendar.getTimeInMillis());
                 },
                 calendar.get(Calendar.YEAR),
@@ -107,7 +178,7 @@ public class AddEditFragment extends Fragment {
                 (view, hourOfDay, minute) -> updateTimeDisplay(hourOfDay, minute),
                 calendar.get(Calendar.HOUR_OF_DAY),
                 calendar.get(Calendar.MINUTE),
-                true // True = 24h format
+                true
         );
         timePicker.show();
     }
@@ -119,39 +190,7 @@ public class AddEditFragment extends Fragment {
     }
 
     private void updateTimeDisplay(int hour, int minute) {
-        // Format giờ đẹp (VD: 09:05)
         selectedTimeString = String.format(Locale.getDefault(), "%02d:%02d", hour, minute);
         btnTime.setText(selectedTimeString);
-    }
-
-    private void saveTask() {
-        String title = etTitle.getText().toString().trim();
-        String subtitle = etSubtitle.getText().toString().trim();
-
-        // Validate dữ liệu
-        if (title.isEmpty()) {
-            etTitle.setError("Please enter title");
-            return;
-        }
-
-        // Tạo đối tượng Task mới
-        // (Lưu ý: Constructor Task của bạn: Title, Subtitle, Date(long), Time, Tag, Priority)
-        Task newTask = new Task(
-                title,
-                subtitle,
-                selectedDateTimestamp,
-                selectedTimeString,
-                "General", // Tag mặc định
-                1 // Priority mặc định (Low)
-        );
-
-        // Gọi ViewModel để lưu vào Database
-        mainViewModel.insertTask(newTask);
-
-        Toast.makeText(getContext(), "Task saved successfully!", Toast.LENGTH_SHORT).show();
-
-        // Quay lại màn hình Home
-        NavController navController = Navigation.findNavController(requireView());
-        navController.popBackStack();
     }
 }

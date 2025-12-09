@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingVertical="4dp">
+
+    <!-- Ô checkbox giả để trang trí -->
+    <ImageView
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_launcher_foreground"
+        android:contentDescription="icon"
+        android:layout_marginEnd="8dp"/>
+    <!-- Bạn có thể thay bằng icon checkbox nếu có -->
+
+    <!-- Ô nhập tên Subtask -->
+    <EditText
+        android:id="@+id/etSubtaskName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:background="@android:color/transparent"
+        android:hint="Enter subtask title"
+        android:padding="8dp"
+        android:textSize="14sp" />
+
+    <!-- Nút Xóa dòng này -->
+    <ImageView
+        android:id="@+id/btnRemoveSubtask"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="8dp"
+        android:src="@android:drawable/ic_delete"
+        android:contentDescription="Remove" />
+
+</LinearLayout>
