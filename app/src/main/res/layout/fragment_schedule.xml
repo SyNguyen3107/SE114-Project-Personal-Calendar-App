@@ -21,7 +21,7 @@
         app:layout_constraintStart_toStartOf="parent"/>
 
     <!-- Lịch Tháng -->
-    <CalendarView
+    <com.applandeo.materialcalendarview.CalendarView
         android:id="@+id/calendarView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

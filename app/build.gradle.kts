@@ -50,6 +50,9 @@ dependencies {
     implementation("androidx.room:room-runtime:$room_version")
     annotationProcessor("androidx.room:room-compiler:$room_version")
 
+    // Thư viện để hiện dot cho lịch MaterialCalendarView
+    implementation("com.applandeo:material-calendar-view:1.9.0-rc03")
+
     // Thư viện hỗ trợ LiveData và ViewModel cho Java
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.10.0")
     implementation("androidx.lifecycle:lifecycle-livedata:2.10.0")
