@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/homeFragment"
-        android:name="com.synguyen.se114project.ui.home.HomeFragment"
+        android:name="com.synguyen.se114project.ui.student.home.HomeFragment"
         android:label="Home"
         tools:layout="@layout/fragment_home">
         <action
@@ -25,7 +25,7 @@
     <!-- MÀN HÌNH MỚI: Danh sách lớp học (Sẽ gắn vào nút giữa BottomNav) -->
     <fragment
         android:id="@+id/courseFragment"
-        android:name="com.synguyen.se114project.ui.course.CourseFragment"
+        android:name="com.synguyen.se114project.ui.student.course.CourseFragment"
         android:label="Courses"
         tools:layout="@layout/fragment_course">
         <!-- Click vào môn học -> Mở chi tiết môn học -->
@@ -37,7 +37,7 @@
     <!-- MÀN HÌNH MỚI: Chi tiết môn học (Task + Tài liệu) -->
     <fragment
         android:id="@+id/courseDetailFragment"
-        android:name="com.synguyen.se114project.ui.coursedetail.CourseDetailFragment"
+        android:name="com.synguyen.se114project.ui.student.coursedetail.CourseDetailFragment"
         android:label="Course Detail"
         tools:layout="@layout/fragment_course_detail">
         <!-- Truyền mã môn học (course ID) sang -->
@@ -54,7 +54,7 @@
     <!-- Màn hình Schedule vẫn giữ lại nhưng không nằm trên BottomNav chính nữa -->
     <fragment
         android:id="@+id/scheduleFragment"
-        android:name="com.synguyen.se114project.ui.schedule.ScheduleFragment"
+        android:name="com.synguyen.se114project.ui.student.schedule.ScheduleFragment"
         android:label="Schedule"
         tools:layout="@layout/fragment_schedule">
         <action
@@ -64,13 +64,13 @@
 
     <fragment
         android:id="@+id/profileFragment"
-        android:name="com.synguyen.se114project.ui.profile.ProfileFragment"
+        android:name="com.synguyen.se114project.ui.student.profile.ProfileFragment"
         android:label="Profile"
         tools:layout="@layout/fragment_profile" />
 
     <fragment
         android:id="@+id/addEditFragment"
-        android:name="com.synguyen.se114project.ui.addedit.AddEditFragment"
+        android:name="com.synguyen.se114project.ui.student.addedit.AddEditFragment"
         android:label="Add Task"
         tools:layout="@layout/fragment_add_edit">
         <argument
@@ -82,7 +82,7 @@
 
     <fragment
         android:id="@+id/taskDetailFragment"
-        android:name="com.synguyen.se114project.ui.taskdetail.TaskDetailFragment"
+        android:name="com.synguyen.se114project.ui.student.taskdetail.TaskDetailFragment"
         android:label="Task Detail"
         tools:layout="@layout/fragment_task_detail">
 

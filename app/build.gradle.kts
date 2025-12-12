@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    id("org.jetbrains.kotlin.android") version "1.9.0"
 }
 
 android {
@@ -7,7 +8,14 @@ android {
     compileSdk {
         version = release(36)
     }
-
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+    packaging {
+        resources {
+            excludes += "META-INF/*" // Tránh lỗi duplicate file khi build
+        }
+    }
     defaultConfig {
         applicationId = "com.synguyen.se114project"
         minSdk = 24
@@ -56,4 +64,12 @@ dependencies {
     // Thư viện hỗ trợ LiveData và ViewModel cho Java
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.10.0")
     implementation("androidx.lifecycle:lifecycle-livedata:2.10.0")
+
+    // THÊM SUPABASE SDK
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.google.code.gson:gson:2.10.1")
+
+    // Thêm Logging để xem API chạy thế nào (Debug cực tiện)
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
 }
