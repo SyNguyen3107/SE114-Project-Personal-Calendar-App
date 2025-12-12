@@ -5,34 +5,56 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.synguyen.se114project.R;
 import com.synguyen.se114project.data.entity.Subtask;
 
-import java.util.List;
+public class SubtaskAdapter extends ListAdapter<Subtask, SubtaskAdapter.SubtaskViewHolder> {
 
-public class SubtaskAdapter extends RecyclerView.Adapter<SubtaskAdapter.SubtaskViewHolder> {
+    private OnSubtaskActionListener listener;
 
-    private List<Subtask> subtasks;
-    private final OnSubtaskCheckListener listener;
-
-    public interface OnSubtaskCheckListener {
+    // Interface mở rộng để hỗ trợ cả Check và Delete (nếu sau này cần)
+    public interface OnSubtaskActionListener {
         void onCheck(Subtask subtask, boolean isChecked);
+        void onDelete(Subtask subtask); // Để dành cho nút xóa
     }
 
-    public SubtaskAdapter(List<Subtask> subtasks, OnSubtaskCheckListener listener) {
-        this.subtasks = subtasks;
+    public SubtaskAdapter() {
+        super(DIFF_CALLBACK);
+    }
+
+    // Phương thức set listener mới
+    public void setOnSubtaskClickListener(OnSubtaskActionListener listener) {
         this.listener = listener;
     }
 
-    public void setSubtasks(List<Subtask> newSubtasks) {
-        this.subtasks = newSubtasks;
-        notifyDataSetChanged();
+    // Hỗ trợ constructor cũ để code cũ không lỗi (nhưng khuyên dùng setOnSubtaskClickListener)
+    public SubtaskAdapter(java.util.List<Subtask> list, OnSubtaskActionListener listener) {
+        super(DIFF_CALLBACK);
+        this.listener = listener;
+        submitList(list);
     }
+
+    private static final DiffUtil.ItemCallback<Subtask> DIFF_CALLBACK = new DiffUtil.ItemCallback<Subtask>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull Subtask oldItem, @NonNull Subtask newItem) {
+            // So sánh UUID
+            return oldItem.getId().equals(newItem.getId());
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull Subtask oldItem, @NonNull Subtask newItem) {
+            return oldItem.getTitle().equals(newItem.getTitle()) &&
+                    oldItem.isCompleted() == newItem.isCompleted();
+        }
+    };
 
     @NonNull
     @Override
@@ -43,50 +65,58 @@ public class SubtaskAdapter extends RecyclerView.Adapter<SubtaskAdapter.SubtaskV
 
     @Override
     public void onBindViewHolder(@NonNull SubtaskViewHolder holder, int position) {
-        Subtask subtask = subtasks.get(position);
+        Subtask subtask = getItem(position);
         holder.bind(subtask);
-    }
-
-    @Override
-    public int getItemCount() {
-        return subtasks != null ? subtasks.size() : 0;
     }
 
     class SubtaskViewHolder extends RecyclerView.ViewHolder {
         CheckBox cbSubtask;
         TextView tvTitle;
+        // ImageView btnDelete; // Nếu layout có nút xóa thì uncomment dòng này
 
         public SubtaskViewHolder(@NonNull View itemView) {
             super(itemView);
             cbSubtask = itemView.findViewById(R.id.cbSubtask);
             tvTitle = itemView.findViewById(R.id.tvSubtaskTitle);
+            // btnDelete = itemView.findViewById(R.id.btnDeleteSubtask); // ID nút xóa
         }
 
         void bind(Subtask subtask) {
-            tvTitle.setText(subtask.title);
+            tvTitle.setText(subtask.getTitle()); // Getter Title
 
-            // Xóa listener cũ để tránh lỗi loop khi setChecked
+            // Xóa listener cũ
             cbSubtask.setOnCheckedChangeListener(null);
-            cbSubtask.setChecked(subtask.isCompleted);
+            cbSubtask.setChecked(subtask.isCompleted()); // Getter isCompleted
 
-            // Gạch ngang chữ nếu đã hoàn thành
-            updateStrikeThrough(subtask.isCompleted);
+            // Gạch ngang chữ
+            updateStrikeThrough(subtask.isCompleted());
 
             // Gán listener mới
             cbSubtask.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                subtask.isCompleted = isChecked;
+                subtask.setCompleted(isChecked); // Setter
                 updateStrikeThrough(isChecked);
-                listener.onCheck(subtask, isChecked);
+                if (listener != null) {
+                    listener.onCheck(subtask, isChecked);
+                }
             });
+
+            // Logic nút xóa (Nếu có)
+            /*
+            if (btnDelete != null) {
+                btnDelete.setOnClickListener(v -> {
+                    if (listener != null) listener.onDelete(subtask);
+                });
+            }
+            */
         }
 
         private void updateStrikeThrough(boolean isChecked) {
             if (isChecked) {
                 tvTitle.setPaintFlags(tvTitle.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
-                tvTitle.setTextColor(0xFFAAAAAA); // Màu xám
+                tvTitle.setTextColor(0xFFAAAAAA);
             } else {
                 tvTitle.setPaintFlags(tvTitle.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
-                tvTitle.setTextColor(0xFF000000); // Màu đen
+                tvTitle.setTextColor(0xFF000000);
             }
         }
     }

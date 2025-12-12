@@ -16,15 +16,47 @@
         <action
             android:id="@+id/action_homeFragment_to_taskDetailFragment"
             app:destination="@id/taskDetailFragment" />
+        <!-- Action mở lịch vẫn giữ nguyên -->
+        <action
+            android:id="@+id/action_homeFragment_to_scheduleFragment"
+            app:destination="@id/scheduleFragment" />
     </fragment>
 
-    <!-- CẬP NHẬT TẠI ĐÂY: Thêm action cho ScheduleFragment -->
+    <!-- MÀN HÌNH MỚI: Danh sách lớp học (Sẽ gắn vào nút giữa BottomNav) -->
+    <fragment
+        android:id="@+id/courseFragment"
+        android:name="com.synguyen.se114project.ui.course.CourseFragment"
+        android:label="Courses"
+        tools:layout="@layout/fragment_course">
+        <!-- Click vào môn học -> Mở chi tiết môn học -->
+        <action
+            android:id="@+id/action_courseFragment_to_courseDetailFragment"
+            app:destination="@id/courseDetailFragment" />
+    </fragment>
+
+    <!-- MÀN HÌNH MỚI: Chi tiết môn học (Task + Tài liệu) -->
+    <fragment
+        android:id="@+id/courseDetailFragment"
+        android:name="com.synguyen.se114project.ui.coursedetail.CourseDetailFragment"
+        android:label="Course Detail"
+        tools:layout="@layout/fragment_course_detail">
+        <!-- Truyền mã môn học (course ID) sang -->
+        <argument
+            android:name="classId"
+            app:argType="string" />
+
+        <!-- Click vào bài tập trong môn học -> Mở chi tiết Task -->
+        <action
+            android:id="@+id/action_courseDetailFragment_to_taskDetailFragment"
+            app:destination="@id/taskDetailFragment" />
+    </fragment>
+
+    <!-- Màn hình Schedule vẫn giữ lại nhưng không nằm trên BottomNav chính nữa -->
     <fragment
         android:id="@+id/scheduleFragment"
         android:name="com.synguyen.se114project.ui.schedule.ScheduleFragment"
         android:label="Schedule"
         tools:layout="@layout/fragment_schedule">
-        <!-- Action chuyển sang màn hình Chi tiết -->
         <action
             android:id="@+id/action_scheduleFragment_to_taskDetailFragment"
             app:destination="@id/taskDetailFragment" />
@@ -40,17 +72,29 @@
         android:id="@+id/addEditFragment"
         android:name="com.synguyen.se114project.ui.addedit.AddEditFragment"
         android:label="Add Task"
-        tools:layout="@layout/fragment_add_edit" />
+        tools:layout="@layout/fragment_add_edit">
+        <argument
+            android:name="taskId"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+    </fragment>
 
     <fragment
         android:id="@+id/taskDetailFragment"
         android:name="com.synguyen.se114project.ui.taskdetail.TaskDetailFragment"
         android:label="Task Detail"
         tools:layout="@layout/fragment_task_detail">
+
         <argument
             android:name="taskId"
-            android:defaultValue="-1L"
-            app:argType="long" />
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+
+        <action
+            android:id="@+id/action_taskDetailFragment_to_addEditFragment"
+            app:destination="@id/addEditFragment" />
     </fragment>
 
 </navigation>

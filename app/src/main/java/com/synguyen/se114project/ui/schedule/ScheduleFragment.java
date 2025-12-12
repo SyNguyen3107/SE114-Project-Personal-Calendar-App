@@ -19,7 +19,7 @@ import com.applandeo.materialcalendarview.CalendarView;
 import com.applandeo.materialcalendarview.EventDay;
 import com.synguyen.se114project.R;
 import com.synguyen.se114project.ui.adapter.TaskAdapter;
-import com.synguyen.se114project.viewmodel.MainViewModel;
+import com.synguyen.se114project.viewmodel.ScheduleViewModel;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -27,7 +27,9 @@ import java.util.List;
 
 public class ScheduleFragment extends Fragment {
 
-    private MainViewModel mainViewModel;
+    // 1. Thay MainViewModel bằng ScheduleViewModel
+    private ScheduleViewModel mViewModel;
+
     private CalendarView calendarView;
     private RecyclerView rvScheduleTasks;
     private TaskAdapter adapter;
@@ -42,15 +44,17 @@ public class ScheduleFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Ánh xạ View
         calendarView = view.findViewById(R.id.calendarView);
         rvScheduleTasks = view.findViewById(R.id.rvScheduleTasks);
 
-        // 1. Setup RecyclerView
+        // 2. Setup RecyclerView với Adapter mới (UUID logic)
         rvScheduleTasks.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        adapter = new TaskAdapter(new ArrayList<>(), task -> {
+        adapter = new TaskAdapter();
+        adapter.setOnItemClickListener(task -> {
             Bundle bundle = new Bundle();
-            bundle.putLong("taskId", task.getId());
+            bundle.putString("taskId", task.getId()); // Truyền String UUID
 
             NavController navController = Navigation.findNavController(view);
             try {
@@ -59,47 +63,51 @@ public class ScheduleFragment extends Fragment {
                 Toast.makeText(getContext(), "Lỗi chuyển trang: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+
         rvScheduleTasks.setAdapter(adapter);
 
-        // 2. ViewModel
-        mainViewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
+        // 3. Khởi tạo ScheduleViewModel
+        mViewModel = new ViewModelProvider(this).get(ScheduleViewModel.class);
 
-        // 3. Khi selectedDate thay đổi → load task
-        mainViewModel.getTasksBySelectedDate().observe(getViewLifecycleOwner(), tasks -> {
-            adapter.setTasks(tasks);
+        // 4. Quan sát danh sách task theo ngày chọn -> Cập nhật List dưới lịch
+        mViewModel.getTasksBySelectedDate().observe(getViewLifecycleOwner(), tasks -> {
+            adapter.submitList(tasks);
         });
 
-        // 4. Quan sát ALL TASK để hiển thị DOT lên lịch
-        mainViewModel.getAllTasks().observe(getViewLifecycleOwner(), allTasks -> {
+        // 5. Quan sát TOÀN BỘ task -> Hiển thị dấu chấm (Dots) trên lịch
+        mViewModel.getAllTasks().observe(getViewLifecycleOwner(), allTasks -> {
             List<EventDay> events = new ArrayList<>();
 
             for (var task : allTasks) {
-                Calendar cal = Calendar.getInstance();
-                cal.setTimeInMillis(task.getDate());
+                // Chỉ đánh dấu các task chưa hoàn thành (Optional)
+                if (!task.isCompleted()) {
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTimeInMillis(task.getDate());
 
-                // Gắn icon DOT
-                events.add(new EventDay(cal, R.drawable.ic_dot_blue));
+                    // Gắn icon DOT (Lưu ý: Icon phải tồn tại trong drawable)
+                    events.add(new EventDay(cal, R.drawable.ic_dot_blue));
+                }
             }
 
             calendarView.setEvents(events);
         });
 
-        // 5. Bắt sự kiện click ngày trên lịch
+        // 6. Xử lý sự kiện click chọn ngày trên lịch
         calendarView.setOnDayClickListener(eventDay -> {
             Calendar cal = eventDay.getCalendar();
 
-            // reset giờ → mốc 00:00
+            // Reset giờ về 00:00:00 để khớp với logic query trong DB
             cal.set(Calendar.HOUR_OF_DAY, 0);
             cal.set(Calendar.MINUTE, 0);
             cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
 
             long millis = cal.getTimeInMillis();
 
-            // Gọi ViewModel để load task
-            mainViewModel.setSelectedDate(millis);
+            // Cập nhật ViewModel -> Trigger LiveData tải lại danh sách bên dưới
+            mViewModel.setSelectedDate(millis);
 
-            // Điều hướng sang HomeFragment
-            Navigation.findNavController(view).navigate(R.id.homeFragment);
+            // LƯU Ý: Không navigate về Home nữa, hiển thị trực tiếp tại đây để tiện theo dõi
         });
     }
 }

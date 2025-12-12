@@ -8,9 +8,9 @@
         android:title="Home" />
 
     <item
-        android:id="@+id/scheduleFragment"
-        android:icon="@drawable/calendar"
-        android:title="Schedule" />
+        android:id="@+id/courseFragment"
+        android:icon="@drawable/learning"
+        android:title="Courses" />
 
     <item
         android:id="@+id/profileFragment"

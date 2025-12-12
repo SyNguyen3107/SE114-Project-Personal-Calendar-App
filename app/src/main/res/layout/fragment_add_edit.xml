@@ -111,7 +111,23 @@
                     android:gravity="center"
                     android:layout_marginStart="8dp"/>
             </LinearLayout>
+            <!-- MỚI: Duration Input -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Duration (minutes)"
+                android:textColor="#757575"
+                android:layout_marginTop="8dp"/>
 
+            <EditText
+                android:id="@+id/etDuration"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:hint="25"
+                android:inputType="number"
+                android:textColor="@android:color/black"
+                android:backgroundTint="#E0E0E0"/>
             <!-- Subtasks Section -->
             <TextView
                 android:layout_width="wrap_content"

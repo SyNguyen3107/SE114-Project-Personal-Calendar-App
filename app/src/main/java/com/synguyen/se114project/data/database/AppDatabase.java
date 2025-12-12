@@ -6,6 +6,8 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
+import com.synguyen.se114project.data.dao.CourseDao;
+import com.synguyen.se114project.data.entity.Course;
 import com.synguyen.se114project.data.entity.Subtask;
 import com.synguyen.se114project.data.entity.Task;
 import com.synguyen.se114project.data.dao.TaskDao;
@@ -14,11 +16,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 // 1. Khai báo các Entity (Bảng) và phiên bản Database
-@Database(entities = {Task.class, Subtask.class}, version = 1, exportSchema = false)
+@Database(entities = {Task.class, Subtask.class, Course.class}, version = 7, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     // 2. Khai báo các DAO (Cổng truy cập)
     public abstract TaskDao taskDao();
+    public abstract CourseDao courseDao();
 
     // 3. Singleton Pattern (Đảm bảo chỉ có 1 kết nối Database duy nhất)
     private static volatile AppDatabase INSTANCE;
@@ -34,8 +37,7 @@ public abstract class AppDatabase extends RoomDatabase {
             synchronized (AppDatabase.class) {
                 if (INSTANCE == null) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
-                                    AppDatabase.class, "task_database") // Tên file: task_database
-                            .build();
+                                    AppDatabase.class, "task_database").fallbackToDestructiveMigration(true).build();
                 }
             }
         }
