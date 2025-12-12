@@ -13,7 +13,6 @@ public class Task {
     @ColumnInfo(name = "title")
     public String title;
 
-    // --- SỬA Ở ĐÂY: Đổi từ String sang long ---
     @ColumnInfo(name = "date")
     public long date;
 
@@ -47,26 +46,17 @@ public class Task {
     // --- Getter và Setter ---
 
     public long getId() { return id; }
-
-    // --- SỬA LỖI Ở ĐÂY: id là long thì phải nhận vào long ---
     public void setId(long id) { this.id = id; }
-
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
-
-    // --- SỬA Ở ĐÂY: Getter/Setter cho Date phải là long ---
     public long getDate() { return date; }
     public void setDate(long date) { this.date = date; }
-
     public int getPriority() { return priority; }
     public void setPriority(int priority) { this.priority = priority; }
-
     public String getSubTitle() { return subtitle; }
     public void setSubTitle(String subtitle) { this.subtitle = subtitle; }
-
     public String getTime() { return time; }
     public void setTime(String time) { this.time = time; }
-
     public String getTag() { return tag; }
     public void setTag(String tag) { this.tag = tag; }
 }

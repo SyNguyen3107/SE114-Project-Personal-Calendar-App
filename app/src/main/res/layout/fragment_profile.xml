@@ -11,7 +11,7 @@
         android:id="@+id/tvTitleProfile"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Profile"
+        android:text="Edit Profile"
         android:textSize="24sp"
         android:textStyle="bold"
         android:textColor="@color/black"
@@ -19,7 +19,6 @@
         app:layout_constraintStart_toStartOf="parent"/>
 
     <!-- Avatar Tròn -->
-    <!-- Sử dụng ShapeableImageView để bo tròn ảnh -->
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/imgAvatar"
         android:layout_width="120dp"
@@ -35,8 +34,9 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- Nút đổi ảnh nhỏ (Optional) -->
+    <!-- Nút đổi ảnh nhỏ (Thêm ID btnChangeAvatar) -->
     <ImageView
+        android:id="@+id/btnChangeAvatar"
         android:layout_width="36dp"
         android:layout_height="36dp"
         android:src="@android:drawable/ic_menu_camera"
@@ -60,7 +60,6 @@
             android:id="@+id/etName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Sy Nguyen"
             android:inputType="textPersonName"/>
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -78,18 +77,17 @@
             android:id="@+id/etEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="synguyen@uit.edu.vn"
             android:inputType="textEmailAddress"/>
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Nút Logout / Save -->
+    <!-- Nút Save (Đổi từ Logout sang Save) -->
     <Button
-        android:id="@+id/btnLogout"
+        android:id="@+id/btnSaveProfile"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Log Out"
+        android:text="Save Profile"
         android:layout_marginBottom="24dp"
-        android:backgroundTint="#FF0000"
+        android:backgroundTint="#6200EE"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

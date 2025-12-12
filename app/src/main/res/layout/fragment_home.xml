@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F8F9FD"
     android:orientation="vertical">
 
+    <!-- Thanh chọn ngày ngang -->
     <HorizontalScrollView
         android:id="@+id/hsDates"
         android:layout_width="match_parent"
@@ -22,6 +25,7 @@
             android:orientation="horizontal" />
     </HorizontalScrollView>
 
+    <!-- Header: Tiêu đề ngày và Nút Thêm -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -29,17 +33,16 @@
         android:layout_marginBottom="16dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp">
+        android:paddingHorizontal="20dp">
 
         <TextView
             android:id="@+id/tvHeaderTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Nov 29th Tasks"
+            tools:text="Dec 02 Tasks"
             android:textColor="#000000"
-            android:textSize="20sp"
+            android:textSize="22sp"
             android:textStyle="bold" />
 
         <TextView
@@ -47,21 +50,65 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_button"
-            android:paddingStart="16dp"
-            android:paddingTop="8dp"
-            android:paddingEnd="16dp"
-            android:paddingBottom="8dp"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp"
             android:text="+ Add Task"
             android:textColor="#FFFFFF"
             android:textSize="12sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:elevation="2dp"/>
     </LinearLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvTasks"
+    <!-- FrameLayout để chứa RecyclerView và Empty State chồng lên nhau -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:paddingBottom="80dp" />
+        android:layout_height="match_parent">
+
+        <!-- Danh sách Task -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvTasks"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="80dp"
+            tools:listitem="@layout/item_task"/>
+
+        <!-- Empty State View (Mặc định ẩn) -->
+        <LinearLayout
+            android:id="@+id/layoutEmptyState"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:visibility="gone"
+            android:paddingBottom="100dp">
+
+            <ImageView
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:src="@drawable/ic_launcher_foreground"
+                android:alpha="0.5"
+                android:contentDescription="Empty" />
+            <!-- Bạn nên thay bằng ảnh vector đẹp hơn, ví dụ: illustration_empty_box -->
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No tasks for this day"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#757575"
+                android:layout_marginTop="16dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Enjoy your free time!"
+                android:textSize="14sp"
+                android:textColor="#9E9E9E"
+                android:layout_marginTop="8dp"/>
+        </LinearLayout>
+
+    </FrameLayout>
 
 </LinearLayout>
