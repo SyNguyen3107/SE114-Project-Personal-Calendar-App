@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // Gọi hàm login để test (Lưu ý: Sau này nên chuyển sang màn hình Login riêng)
-        login("synguyen3107@gmail.com", "12345678");
+//        login("synguyen3107@gmail.com", "12345678");
     }
 
     // --- HÀM 1: LOGIN ---

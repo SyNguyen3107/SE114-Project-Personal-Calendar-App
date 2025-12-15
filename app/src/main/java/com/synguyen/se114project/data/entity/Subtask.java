@@ -24,7 +24,7 @@ public class Subtask {
     public String id;
 
     @ColumnInfo(name = "task_id", index = true)
-    public String taskId; // QUAN TRỌNG: Đã đổi int -> String để khớp với Task cha
+    public String taskId;
 
     @ColumnInfo(name = "title")
     public String title;

@@ -12,121 +12,134 @@
     app:cardBackgroundColor="@color/white"
     app:strokeColor="#F0F0F0"
     app:strokeWidth="1dp">
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp">
-
-        <!-- Icon Priority -->
-        <ImageView
-            android:id="@+id/imgPriority"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_launcher_background"
+        android:layout_height="match_parent">
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/cbComplete"
             app:layout_constraintTop_toTopOf="parent"
-            android:background="@drawable/bg_circle_priority"
-            android:padding="8dp"
-            tools:ignore="ContentDescription" />
+            app:layout_constraintBottom_toBottomOf="parent">
+            <!-- Icon Priority -->
+            <ImageView
+                android:id="@+id/imgPriority"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_launcher_background"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:background="@drawable/bg_circle_priority"
+                android:padding="8dp"
+                tools:ignore="ContentDescription" />
 
-        <!-- Tiêu đề -->
-        <TextView
-            android:id="@+id/tvTitle"
-            android:layout_width="0dp"
+            <!-- Tiêu đề -->
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="8dp"
+                tools:text="Code review"
+                android:textColor="#000000"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toEndOf="@id/imgPriority"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/tvTime"/>
+
+            <!-- Subtitle -->
+            <TextView
+                android:id="@+id/tvSubTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                tools:text="Backend Team"
+                android:textColor="#757575"
+                android:textSize="12sp"
+                app:layout_constraintStart_toStartOf="@id/tvTitle"
+                app:layout_constraintEnd_toEndOf="@id/tvTitle"
+                app:layout_constraintTop_toBottomOf="@id/tvTitle" />
+
+            <!-- Progress Bar (MỚI) -->
+            <ProgressBar
+                android:id="@+id/progressBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="0dp"
+                android:layout_height="6dp"
+                android:layout_marginTop="12dp"
+                android:progressDrawable="@drawable/custom_progress_bar"
+                android:progress="50"
+                android:max="100"
+                app:layout_constraintStart_toStartOf="@id/tvTitle"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvSubTitle"/>
+            <!-- Bạn cần tạo custom_progress_bar.xml sau -->
+
+            <!-- Text Progress (MỚI) -->
+            <TextView
+                android:id="@+id/tvProgressStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="50% Completed"
+                android:textSize="10sp"
+                android:textColor="#757575"
+                android:layout_marginTop="4dp"
+                app:layout_constraintStart_toStartOf="@id/progressBar"
+                app:layout_constraintTop_toBottomOf="@id/progressBar"/>
+
+            <!-- Countdown Timer (MỚI) -->
+            <TextView
+                android:id="@+id/tvCountdown"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="Due in 2h 30m"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="#FF5252"
+                android:layout_marginTop="4dp"
+                app:layout_constraintEnd_toEndOf="@id/progressBar"
+                app:layout_constraintTop_toBottomOf="@id/progressBar"/>
+
+            <!-- Giờ -->
+            <TextView
+                android:id="@+id/tvTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="11:30"
+                android:textColor="#757575"
+                android:textSize="12sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/tvTitle"
+                app:layout_constraintBottom_toBottomOf="@id/tvTitle"/>
+
+            <!-- Ẩn View Ngày -->
+            <TextView
+                android:id="@+id/tvDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvTime"/>
+
+            <TextView
+                android:id="@+id/tvTag"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="parent"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+        <CheckBox
+            android:id="@+id/cbComplete"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="8dp"
-            tools:text="Code review"
-            android:textColor="#000000"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:layout_constraintStart_toEndOf="@id/imgPriority"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/tvTime"/>
-
-        <!-- Subtitle -->
-        <TextView
-            android:id="@+id/tvSubTitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            tools:text="Backend Team"
-            android:textColor="#757575"
-            android:textSize="12sp"
-            app:layout_constraintStart_toStartOf="@id/tvTitle"
-            app:layout_constraintEnd_toEndOf="@id/tvTitle"
-            app:layout_constraintTop_toBottomOf="@id/tvTitle" />
-
-        <!-- Progress Bar (MỚI) -->
-        <ProgressBar
-            android:id="@+id/progressBar"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="0dp"
-            android:layout_height="6dp"
-            android:layout_marginTop="12dp"
-            android:progressDrawable="@drawable/custom_progress_bar"
-            android:progress="50"
-            android:max="100"
-            app:layout_constraintStart_toStartOf="@id/tvTitle"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvSubTitle"/>
-        <!-- Bạn cần tạo custom_progress_bar.xml sau -->
-
-        <!-- Text Progress (MỚI) -->
-        <TextView
-            android:id="@+id/tvProgressStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            tools:text="50% Completed"
-            android:textSize="10sp"
-            android:textColor="#757575"
-            android:layout_marginTop="4dp"
-            app:layout_constraintStart_toStartOf="@id/progressBar"
-            app:layout_constraintTop_toBottomOf="@id/progressBar"/>
-
-        <!-- Countdown Timer (MỚI) -->
-        <TextView
-            android:id="@+id/tvCountdown"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            tools:text="Due in 2h 30m"
-            android:textSize="10sp"
-            android:textStyle="bold"
-            android:textColor="#FF5252"
-            android:layout_marginTop="4dp"
-            app:layout_constraintEnd_toEndOf="@id/progressBar"
-            app:layout_constraintTop_toBottomOf="@id/progressBar"/>
-
-        <!-- Giờ -->
-        <TextView
-            android:id="@+id/tvTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            tools:text="11:30"
-            android:textColor="#757575"
-            android:textSize="12sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/tvTitle"
-            app:layout_constraintBottom_toBottomOf="@id/tvTitle"/>
-
-        <!-- Ẩn View Ngày -->
-        <TextView
-            android:id="@+id/tvDate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvTime"/>
-
-        <TextView
-            android:id="@+id/tvTag"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="parent"/>
-
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:buttonTint="#6200EE"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 </com.google.android.material.card.MaterialCardView>

@@ -7,11 +7,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -52,7 +54,7 @@ public class HomeFragment extends Fragment {
 
         // 1. Ánh xạ View
         rvTasks = view.findViewById(R.id.rvTasks);
-        rvActiveTimers = view.findViewById(R.id.rv_active_timers); // RecyclerView mới cho Timer
+        rvActiveTimers = view.findViewById(R.id.rv_active_timers);
         llDatesContainer = view.findViewById(R.id.llDatesContainer);
         btnAdd = view.findViewById(R.id.btnAdd);
         tvHeaderTitle = view.findViewById(R.id.tvHeaderTitle);
@@ -61,41 +63,65 @@ public class HomeFragment extends Fragment {
         // 2. Setup Task Adapter
         rvTasks.setLayoutManager(new LinearLayoutManager(requireContext()));
         taskAdapter = new TaskAdapter();
+
+        // --- KHÔI PHỤC: SỰ KIỆN CLICK ITEM TASK ---
         taskAdapter.setOnItemClickListener(task -> {
             Bundle bundle = new Bundle();
-            bundle.putString("taskId", task.getId());
+            // Đảm bảo taskId được truyền đúng kiểu (String/Long tùy vào Entity của bạn)
+            // Nếu getId trả về String thì dùng putString, Long thì putLong
+            bundle.putString("taskId", String.valueOf(task.getId()));
+
+            NavController navController = Navigation.findNavController(view);
             try {
-                Navigation.findNavController(view).navigate(R.id.action_homeFragment_to_taskDetailFragment, bundle);
-            } catch (Exception e) {}
+                navController.navigate(R.id.action_homeFragment_to_taskDetailFragment, bundle);
+            } catch (Exception e) {
+                Toast.makeText(getContext(), "Lỗi điều hướng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
         });
+
+        // --- KHÔI PHỤC: SỰ KIỆN CHECKBOX TASK ---
+        taskAdapter.setOnTaskCheckListener((task, isChecked) -> {
+            if (homeViewModel != null) {
+                homeViewModel.updateTaskStatus(task, isChecked);
+            }
+        });
+
         rvTasks.setAdapter(taskAdapter);
 
-        // 3. Setup Timer Adapter (MỚI)
+        // 3. Setup Timer Adapter
         rvActiveTimers.setLayoutManager(new LinearLayoutManager(requireContext()));
         activeTimersAdapter = new ActiveTimersAdapter(task -> {
-            // Click vào timer bar -> mở Task Detail
             Bundle bundle = new Bundle();
-            bundle.putString("taskId", task.getId());
+            bundle.putString("taskId", String.valueOf(task.getId()));
             try {
                 Navigation.findNavController(view).navigate(R.id.action_homeFragment_to_taskDetailFragment, bundle);
             } catch (Exception e) {}
         });
         rvActiveTimers.setAdapter(activeTimersAdapter);
 
+        // --- KHÔI PHỤC: SỰ KIỆN CLICK NÚT ADD ---
+        btnAdd.setOnClickListener(v -> {
+            NavController navController = Navigation.findNavController(view);
+            try {
+                navController.navigate(R.id.action_homeFragment_to_addEditFragment);
+            } catch (Exception e) {
+                Toast.makeText(getContext(), "Chưa cấu hình action Add!", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         // 4. ViewModel
         homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
         timerViewModel = new ViewModelProvider(requireActivity()).get(TimerViewModel.class);
 
-        // --- LOGIC MULTI-TIMER ---
+        // Gọi Sync
+        homeViewModel.syncData();
 
-        // Quan sát danh sách các Task đang chạy Timer
+        // --- LOGIC MULTI-TIMER ---
         timerViewModel.getRunningTasks().observe(getViewLifecycleOwner(), tasks -> {
             activeTimersAdapter.submitList(tasks);
-            // Ẩn hiện RecyclerView nếu không có timer nào
             rvActiveTimers.setVisibility(tasks.isEmpty() ? View.GONE : View.VISIBLE);
         });
 
-        // Quan sát thời gian của từng task để update progress bar
         timerViewModel.getTasksTimeRemaining().observe(getViewLifecycleOwner(), map -> {
             activeTimersAdapter.updateTimeMap(map);
         });
@@ -175,5 +201,28 @@ public class HomeFragment extends Fragment {
             llDatesContainer.addView(itemView);
             cal.add(Calendar.DAY_OF_YEAR, 1);
         }
+
+        // --- KHÔI PHỤC: NÚT VIEW ALL (CALENDAR) ---
+        View viewMoreItem = inflater.inflate(R.layout.item_date, llDatesContainer, false);
+        TextView tvDayMore = viewMoreItem.findViewById(R.id.tv_day_of_week);
+        TextView tvDateMore = viewMoreItem.findViewById(R.id.tv_date);
+
+        tvDayMore.setText("View");
+        tvDateMore.setText("All");
+
+        viewMoreItem.setBackgroundResource(R.drawable.bg_date_unselected);
+        tvDayMore.setTextColor(Color.parseColor("#757575"));
+        tvDateMore.setTextColor(Color.BLACK);
+
+        viewMoreItem.setOnClickListener(v -> {
+            try {
+                NavController navController = Navigation.findNavController(requireView());
+                navController.navigate(R.id.scheduleFragment);
+            } catch (Exception e) {
+                Toast.makeText(getContext(), "Không tìm thấy màn hình Lịch", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        llDatesContainer.addView(viewMoreItem);
     }
 }

@@ -23,12 +23,21 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+import android.widget.CheckBox;
+
 public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
 
     private OnItemClickListener listener;
+    // Thêm listener cho sự kiện check vào checkbox
+    private OnTaskCheckListener checkListener;
 
     public interface OnItemClickListener {
         void onItemClick(Task task);
+    }
+
+    // Interface mới để báo ra ngoài khi task được check
+    public interface OnTaskCheckListener {
+        void onCheck(Task task, boolean isChecked);
     }
 
     public TaskAdapter() {
@@ -39,10 +48,15 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
         this.listener = listener;
     }
 
+    // Setter cho check listener
+    public void setOnTaskCheckListener(OnTaskCheckListener listener) {
+        this.checkListener = listener;
+    }
+
     private static final DiffUtil.ItemCallback<Task> DIFF_CALLBACK = new DiffUtil.ItemCallback<Task>() {
         @Override
         public boolean areItemsTheSame(@NonNull Task oldItem, @NonNull Task newItem) {
-            return oldItem.getId().equals(newItem.getId());
+            return oldItem.getId() == newItem.getId(); // Sử dụng == cho long primitive nếu getId trả về long, hoặc equals nếu Long object
         }
 
         @Override
@@ -50,7 +64,7 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
             return oldItem.getTitle().equals(newItem.getTitle()) &&
                     oldItem.getDate() == newItem.getDate() &&
                     oldItem.getPriority() == newItem.getPriority() &&
-                    oldItem.isCompleted() == newItem.isCompleted(); // Giờ đây dòng này đã HỢP LỆ
+                    oldItem.isCompleted() == newItem.isCompleted();
         }
     };
 
@@ -64,13 +78,15 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
         Task task = getItem(position);
-        holder.bind(task, listener);
+        // Truyền thêm checkListener vào hàm bind
+        holder.bind(task, listener, checkListener);
     }
 
     static class TaskViewHolder extends RecyclerView.ViewHolder {
         TextView tvTitle, tvSubTitle, tvTime, tvProgressStatus, tvCountdown, tvTag, tvDate;
         ProgressBar progressBar;
         ImageView imgPriority;
+        CheckBox cbComplete; // Khai báo CheckBox
 
         public TaskViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -83,14 +99,31 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
             imgPriority = itemView.findViewById(R.id.imgPriority);
             tvTag = itemView.findViewById(R.id.tvTag);
             tvDate = itemView.findViewById(R.id.tvDate);
+            // Ánh xạ CheckBox (Đảm bảo ID này tồn tại trong item_task.xml)
+            cbComplete = itemView.findViewById(R.id.cbComplete);
         }
 
-        public void bind(final Task task, final OnItemClickListener listener) {
+        public void bind(final Task task, final OnItemClickListener listener, final OnTaskCheckListener checkListener) {
             tvTitle.setText(task.getTitle());
             tvSubTitle.setText(task.getSubTitle());
             tvTime.setText(task.getTime());
 
             // --- XỬ LÝ TRẠNG THÁI HOÀN THÀNH ---
+
+            // Xử lý Checkbox
+            if (cbComplete != null) {
+                // Gỡ listener cũ trước khi set trạng thái để tránh vòng lặp vô hạn
+                cbComplete.setOnCheckedChangeListener(null);
+                cbComplete.setChecked(task.isCompleted());
+
+                // Gán listener mới
+                cbComplete.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                    if (checkListener != null) {
+                        checkListener.onCheck(task, isChecked);
+                    }
+                });
+            }
+
             if (task.isCompleted()) {
                 // Gạch ngang tiêu đề nếu đã xong
                 tvTitle.setPaintFlags(tvTitle.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
