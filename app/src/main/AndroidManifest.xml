@@ -17,6 +17,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SE114Project">
         <activity
+            android:name=".LoginActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.teacher.TeacherCourseDetailActivity"
             android:exported="false" />
         <activity
