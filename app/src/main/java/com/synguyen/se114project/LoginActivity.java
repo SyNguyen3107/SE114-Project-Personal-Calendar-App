@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import android.content.SharedPreferences;
 
 import com.google.gson.JsonObject;
 import com.synguyen.se114project.data.remote.RetrofitClient;
@@ -58,7 +59,7 @@ public class LoginActivity extends AppCompatActivity {
                     String bearerToken = "Bearer " + accessToken;
 
                     // TODO 1: Lưu accessToken và userId vào SharedPreferences ngay lập tức!
-//                    saveToPreferences(accessToken, userId);
+                    saveToPreferences(accessToken, userId);
 
                     // TODO 2: Gọi tiếp API lấy Profile để xem là Teacher hay Student
                     checkUserRole(userId, bearerToken);
@@ -111,4 +112,13 @@ public class LoginActivity extends AppCompatActivity {
             Toast.makeText(this, "Bạn đang ở giao diện Sinh Viên", Toast.LENGTH_SHORT).show();
         }
     }
+    // TODO 3: Lưu accessToken và userId vào SharedPreferences
+    private void saveToPreferences(String accessToken, String userId) {
+        SharedPreferences prefs = getSharedPreferences("auth_prefs", MODE_PRIVATE);
+        prefs.edit()
+                .putString("access_token", accessToken)
+                .putString("user_id", userId)
+                .apply();
+    }
+
 }

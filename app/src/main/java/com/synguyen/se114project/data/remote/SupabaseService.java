@@ -75,4 +75,23 @@ public interface SupabaseService {
             @Header("Authorization") String token, // "Bearer <access_token>"
             @Body JsonObject body
     );
+
+    // 8.LẤY PROFILE theo id
+    @GET("rest/v1/profiles?select=*")
+    Call<List<com.google.gson.JsonObject>> getProfile(
+            @Header("apikey") String apiKey,
+            @Header("Authorization") String token,
+            @Query("id") String queryId // "eq.<user_id>"
+    );
+
+    // 9.UPDATE PROFILE theo id
+    @retrofit2.http.PATCH("rest/v1/profiles")
+    @Headers({"Prefer: return=minimal", "Content-Type: application/json"})
+    Call<Void> updateProfile(
+            @Header("apikey") String apiKey,
+            @Header("Authorization") String token,
+            @Query("id") String queryId, // "eq.<user_id>"
+            @Body com.google.gson.JsonObject body
+    );
+
 }
