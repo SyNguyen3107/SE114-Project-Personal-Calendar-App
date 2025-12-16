@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="#F4F6F8"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Card container -->
+    <LinearLayout
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:layout_width="320dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_white_rounded"
+        android:padding="24dp">
+
+        <!-- Logo tròn -->
+        <FrameLayout
+            android:layout_gravity="center"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:background="@drawable/bg_white_rounded">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:layout_gravity="center"
+                android:scaleType="fitCenter"
+                android:src="@drawable/logo_school" />
+        </FrameLayout>
+
+        <!-- Title -->
+        <TextView
+            android:text="Create Account"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <!-- Email -->
+        <EditText
+            android:id="@+id/edtEmail"
+            android:hint="Email"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_input"
+            android:padding="12dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <!-- Password -->
+        <EditText
+            android:id="@+id/edtPassword"
+            android:hint="Password"
+            android:inputType="textPassword"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_input"
+            android:padding="12dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <!-- Full name -->
+        <EditText
+            android:id="@+id/edtFullName"
+            android:hint="Full name"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_input"
+            android:padding="12dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <!-- Button -->
+        <Button
+            android:id="@+id/btnRegister"
+            android:text="Sign Up"
+            android:layout_marginTop="20dp"
+            android:backgroundTint="#1976D2"
+            android:textColor="@android:color/white"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"/>
+    </LinearLayout>
+</FrameLayout>

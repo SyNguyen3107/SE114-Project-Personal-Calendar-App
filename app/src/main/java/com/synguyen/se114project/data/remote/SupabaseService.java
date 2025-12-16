@@ -58,4 +58,21 @@ public interface SupabaseService {
             @Header("Authorization") String token,
             @Query("owner_id") String ownerId
     );
+
+    // 6. Đăng kí
+    @POST("auth/v1/signup")
+    @Headers("Content-Type: application/json")
+    Call<AuthResponse> signUpUser(
+            @Header("apikey") String apiKey,
+            @Body JsonObject body
+    );
+
+    // 7. Insert Profile
+    @POST("rest/v1/profiles")
+    @Headers({"Prefer: return=minimal", "Content-Type: application/json"})
+    Call<Void> insertProfile(
+            @Header("apikey") String apiKey,
+            @Header("Authorization") String token, // "Bearer <access_token>"
+            @Body JsonObject body
+    );
 }
