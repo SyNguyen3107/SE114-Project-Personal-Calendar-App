@@ -20,7 +20,7 @@ public class ProfileRepository {
     }
 
     public ProfileRepository() {
-        service = RetrofitClient.getClient().create(SupabaseService.class);
+        service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
     }
 
     public void getProfile(String accessToken, String userId, ResultCallback<JsonObject> cb) {

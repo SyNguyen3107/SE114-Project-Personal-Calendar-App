@@ -1,6 +1,7 @@
 package com.synguyen.se114project.data.repository;
 
 import com.google.gson.JsonObject;
+import com.synguyen.se114project.BuildConfig;
 import com.synguyen.se114project.data.remote.RetrofitClient;
 import com.synguyen.se114project.data.remote.SupabaseService;
 import com.synguyen.se114project.data.remote.response.AuthResponse;
@@ -19,8 +20,7 @@ public class AuthRepository {
     private final SupabaseService supabaseService;
 
     public AuthRepository() {
-        supabaseService =
-                RetrofitClient.getClient().create(SupabaseService.class);
+        supabaseService = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
     }
 
     // ================= CALLBACK =================
@@ -45,57 +45,46 @@ public class AuthRepository {
     // ================= SIGN UP FLOW =================
     /**
      * Flow:
-     * 1) Supabase Auth SignUp
-     * 2) Insert row into public.profiles
+     * 1. Gọi API Signup của Supabase Auth
+     * 2. Nếu thành công -> Lấy ID user -> Gọi API Insert vào bảng 'profiles'
      */
-    public void signUpAndCreateProfile(
-            String email,
-            String password,
-            String fullName,
-            ResultCallback<SignUpResult> callback
-    ) {
+    // ĐÃ SỬA TÊN HÀM TẠI ĐÂY:
+    public void signUpAndCreateProfile(String email, String password, String fullName, ResultCallback<SignUpResult> callback) {
+        JsonObject body = new JsonObject();
+        body.addProperty("email", email);
+        body.addProperty("password", password);
 
-        // ---------- 1. SIGN UP ----------
-        JsonObject signUpBody = new JsonObject();
-        signUpBody.addProperty("email", email);
-        signUpBody.addProperty("password", password);
-
-        supabaseService.signUpUser(
-                RetrofitClient.SUPABASE_KEY,
-                signUpBody
-        ).enqueue(new Callback<AuthResponse>() {
-
+        // Gọi API Đăng ký
+        supabaseService.signUpUser(BuildConfig.SUPABASE_KEY, body).enqueue(new Callback<AuthResponse>() {
             @Override
             public void onResponse(Call<AuthResponse> call, Response<AuthResponse> response) {
-
-                if (!response.isSuccessful() || response.body() == null || response.body().user == null) {
+                if (!response.isSuccessful() || response.body() == null) {
                     callback.onError("Sign up failed: " + response.code());
                     return;
                 }
 
-                String userId = response.body().user.id;
-                String userEmail = response.body().user.email;
-                String accessToken = response.body().accessToken;
+                AuthResponse authData = response.body();
+                // Dùng hàm getValidAccessToken() để lấy token an toàn
+                String accessToken = authData.getValidAccessToken();
 
-                if (userId == null || userId.isEmpty()) {
-                    callback.onError("Missing userId from Supabase");
+                if (authData.user == null || accessToken == null) {
+                    callback.onError("Please check your email to confirm registration.");
                     return;
                 }
 
-                if (accessToken == null || accessToken.isEmpty()) {
-                    callback.onError("Missing access token (check email confirm setting)");
-                    return;
-                }
+                String userId = authData.user.id;
+                String userEmail = authData.user.email;
 
-                // ---------- 2. INSERT PROFILE ----------
+                // --- BƯỚC 2: TẠO PROFILE (public.profiles) ---
                 JsonObject profileBody = new JsonObject();
                 profileBody.addProperty("id", userId);
                 profileBody.addProperty("full_name", fullName);
                 profileBody.addProperty("email", userEmail);
                 profileBody.addProperty("avatar_url", "default_avatar.png");
+                profileBody.addProperty("role", "student");
 
                 supabaseService.insertProfile(
-                        RetrofitClient.SUPABASE_KEY,
+                        BuildConfig.SUPABASE_KEY,
                         "Bearer " + accessToken,
                         profileBody
                 ).enqueue(new Callback<Void>() {
@@ -103,10 +92,12 @@ public class AuthRepository {
                     @Override
                     public void onResponse(Call<Void> call, Response<Void> response) {
                         if (!response.isSuccessful()) {
+                            // Nếu insert profile lỗi, vẫn báo lỗi để user biết
                             callback.onError("Insert profile failed: " + response.code());
                             return;
                         }
 
+                        // Thành công cả 2 bước
                         callback.onSuccess(
                                 new SignUpResult(userId, userEmail, accessToken)
                         );

@@ -1,8 +1,13 @@
+import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     id("org.jetbrains.kotlin.android") version "1.9.0"
 }
-
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
 android {
     namespace = "com.synguyen.se114project"
     compileSdk {
@@ -24,6 +29,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "SUPABASE_URL", localProperties.getProperty("SUPABASE_URL"))
+        buildConfigField("String", "SUPABASE_KEY", localProperties.getProperty("SUPABASE_KEY"))
     }
 
     buildTypes {
@@ -34,6 +42,9 @@ android {
                 "proguard-rules.pro"
             )
         }
+    }
+    buildFeatures {
+        buildConfig = true
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

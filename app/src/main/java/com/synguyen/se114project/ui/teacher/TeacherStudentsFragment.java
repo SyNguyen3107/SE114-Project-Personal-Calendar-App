@@ -58,7 +58,7 @@ public class TeacherStudentsFragment extends Fragment {
 
         if (token == null || courseId == null) return;
 
-        SupabaseService service = RetrofitClient.getClient().create(SupabaseService.class);
+        SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
         // Lọc sinh viên theo courseId
         service.getStudentsInCourse(RetrofitClient.SUPABASE_KEY, token, "eq." + courseId)
                 .enqueue(new Callback<List<JsonObject>>() {

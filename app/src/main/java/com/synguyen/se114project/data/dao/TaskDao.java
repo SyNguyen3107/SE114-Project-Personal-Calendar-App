@@ -22,9 +22,8 @@ public interface TaskDao {
 
     @Update
     void updateTask(Task task);
-
     @Delete
-    void deletePhysicalTask(Task task);
+    void deleteTask(Task task);
 
     @Query("UPDATE task_table SET is_deleted = 1, is_synced = 0, last_updated = :currentTime WHERE id = :taskId")
     void softDeleteTask(String taskId, long currentTime);

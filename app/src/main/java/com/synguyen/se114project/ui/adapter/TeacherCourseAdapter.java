@@ -6,27 +6,27 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.google.gson.JsonObject;
 import com.synguyen.se114project.R;
+import com.synguyen.se114project.data.entity.Course;
 
 import java.util.List;
 
 public class TeacherCourseAdapter extends RecyclerView.Adapter<TeacherCourseAdapter.CourseViewHolder> {
 
-    private List<JsonObject> courseList;
+    private List<Course> courseList;
 
     // Interface để xử lý sự kiện khi bấm vào item
     public interface OnItemClickListener {
-        void onItemClick(JsonObject course);
+        void onItemClick(Course course);
     }
     private final OnItemClickListener listener;
 
-    public TeacherCourseAdapter(List<JsonObject> courseList, OnItemClickListener listener) {
+    public TeacherCourseAdapter(List<Course> courseList, OnItemClickListener listener) {
         this.courseList = courseList;
         this.listener = listener;
     }
 
-    public void updateData(List<JsonObject> newList) {
+    public void updateData(List<Course> newList) {
         this.courseList = newList;
         notifyDataSetChanged();
     }
@@ -40,17 +40,12 @@ public class TeacherCourseAdapter extends RecyclerView.Adapter<TeacherCourseAdap
 
     @Override
     public void onBindViewHolder(@NonNull CourseViewHolder holder, int position) {
-        JsonObject course = courseList.get(position);
-
-        // Lấy dữ liệu an toàn từ JSON
-        String name = course.has("name") && !course.get("name").isJsonNull()
-                ? course.get("name").getAsString() : "No Name";
-        String description = course.has("description") && !course.get("description").isJsonNull()
-                ? course.get("description").getAsString() : "";
+        Course course = courseList.get(position);
+        String name = course.getName() != null ? course.getName() : "No Name";
+        String description = course.getDescription() != null ? course.getDescription() : "";
 
         holder.tvName.setText(name);
         holder.tvCode.setText(description);
-
         holder.itemView.setOnClickListener(v -> listener.onItemClick(course));
     }
 

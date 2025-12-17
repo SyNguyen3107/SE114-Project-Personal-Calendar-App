@@ -1,20 +1,33 @@
 package com.synguyen.se114project.data.remote;
 
+import com.synguyen.se114project.BuildConfig;
+
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitClient {
-    private static final String BASE_URL = "https://lazxmtosowirorbweoxh.supabase.co";
-
-    // Key Anon public (Lấy từ Supabase Dashboard)
-    public static final String SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxhenhtdG9zb3dpcm9yYndlb3hoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1NDkyNzksImV4cCI6MjA4MTEyNTI3OX0.XvoCKaya3R-H4-DeWCGeLA1_CL77iYk_PSUyfm1xIo0";
+    public static final String SUPABASE_KEY = BuildConfig.SUPABASE_KEY;
+    private static final String BASE_URL = BuildConfig.SUPABASE_URL;
 
     private static Retrofit retrofit;
 
-    public static Retrofit getClient() {
+    public static Retrofit getRetrofitInstance() {
         if (retrofit == null) {
+            // 1. Cấu hình Log để xem request/response trong Logcat
+            HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+            // Chọn Level.BODY để xem toàn bộ nội dung JSON gửi đi/nhận về
+            logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .addInterceptor(logging)
+                    .build();
+
+            // 2. Khởi tạo Retrofit
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
+                    .client(client) // Gắn client đã cấu hình log
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
         }

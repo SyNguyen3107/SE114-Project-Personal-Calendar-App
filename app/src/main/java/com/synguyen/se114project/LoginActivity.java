@@ -46,7 +46,7 @@ public class LoginActivity extends AppCompatActivity {
         body.addProperty("password", password);
 
         // 2. Gọi API
-        SupabaseService service = RetrofitClient.getClient().create(SupabaseService.class);
+        SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
         Call<AuthResponse> call = service.loginUser(RetrofitClient.SUPABASE_KEY, body);
 
         call.enqueue(new Callback<AuthResponse>() {
@@ -78,7 +78,7 @@ public class LoginActivity extends AppCompatActivity {
 
     // Hàm check role
     private void checkUserRole(String userId, String token) {
-        SupabaseService service = RetrofitClient.getClient().create(SupabaseService.class);
+        SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
         // Cú pháp Supabase query: eq.GIÁ_TRỊ
         String queryId = "eq." + userId;
 

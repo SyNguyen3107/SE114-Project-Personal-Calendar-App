@@ -58,6 +58,13 @@ public interface SupabaseService {
             @Header("Authorization") String token,
             @Query("owner_id") String ownerId
     );
+    @GET("rest/v1/tasks?select=*")
+    Call<List<Task>> getTasksByCourse(
+            @Header("apikey") String apiKey,
+            @Header("Authorization") String token,
+            @Query("course_id") String courseId // Truyền vào: "eq.ID_KHOA_HOC"
+    );
+    Call<List<Course>> createCourse(String supabaseKey, String token, JsonObject json);
 
     // 6. Đăng kí
     @POST("auth/v1/signup")
@@ -93,5 +100,28 @@ public interface SupabaseService {
             @Query("id") String queryId, // "eq.<user_id>"
             @Body com.google.gson.JsonObject body
     );
+    // THÊM: Cập nhật Task (Dùng PATCH để sửa 1 phần dữ liệu)
+    @retrofit2.http.PATCH("rest/v1/tasks")
+    @Headers({"Prefer: return=minimal", "Content-Type: application/json"})
+    Call<Void> updateTask(
+            @Header("apikey") String apiKey,
+            @Header("Authorization") String token,
+            @Query("id") String taskId, // eq.UUID
+            @Body Task task
+    );
 
+    // THÊM: Xóa Task (Xóa mềm hoặc cứng tùy logic, ở đây là xóa cứng trên server)
+    @retrofit2.http.DELETE("rest/v1/tasks")
+    Call<Void> deleteTask(
+            @Header("apikey") String apiKey,
+            @Header("Authorization") String token,
+            @Query("id") String taskId // eq.UUID
+    );
+
+    @GET("rest/v1/enrollments?select=profiles(*)")
+    Call<List<JsonObject>> getStudentsInCourse(
+            @Header("apikey") String apiKey,
+            @Header("Authorization") String token,
+            @Query("course_id") String courseId // Lưu ý: Tham số truyền vào phải có dạng "eq.ID_LOP"
+    );
 }

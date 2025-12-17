@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:background="#F4F6F8"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#F4F6F8">
 
-    <!-- Card container -->
     <LinearLayout
-        android:layout_gravity="center"
-        android:orientation="vertical"
         android:layout_width="320dp"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:background="@drawable/bg_white_rounded"
+        android:orientation="vertical"
         android:padding="24dp">
 
-        <!-- Logo tròn -->
         <FrameLayout
-            android:layout_gravity="center"
             android:layout_width="80dp"
             android:layout_height="80dp"
+            android:layout_gravity="center"
             android:background="@drawable/bg_white_rounded">
 
             <ImageView
@@ -28,55 +27,74 @@
                 android:src="@drawable/logo_school" />
         </FrameLayout>
 
-        <!-- Title -->
         <TextView
-            android:text="Create Account"
-            android:textSize="20sp"
-            android:textStyle="bold"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:gravity="center"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:text="Create Account"
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
-        <!-- Email -->
-        <EditText
-            android:id="@+id/edtEmail"
-            android:hint="Email"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_input"
-            android:padding="12dp"
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:hint="Full name">
 
-        <!-- Password -->
-        <EditText
-            android:id="@+id/edtPassword"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtFullName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Email">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textEmailAddress" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:hint="Password"
-            android:inputType="textPassword"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/bg_input"
-            android:padding="12dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            app:passwordToggleEnabled="true">
 
-        <!-- Full name -->
-        <EditText
-            android:id="@+id/edtFullName"
-            android:hint="Full name"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/bg_input"
-            android:padding="12dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Button -->
         <Button
             android:id="@+id/btnRegister"
-            android:text="Sign Up"
-            android:layout_marginTop="20dp"
-            android:backgroundTint="#1976D2"
-            android:textColor="@android:color/white"
             android:layout_width="match_parent"
-            android:layout_height="48dp"/>
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:backgroundTint="#1976D2"
+            android:text="Sign Up"
+            android:textColor="@android:color/white" />
+
     </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
 </FrameLayout>
