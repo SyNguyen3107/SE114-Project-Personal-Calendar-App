@@ -4,15 +4,21 @@ import com.google.gson.JsonObject;
 import com.synguyen.se114project.data.entity.Course;
 import com.synguyen.se114project.data.entity.Task;
 import com.synguyen.se114project.data.remote.response.AuthResponse;
+import com.synguyen.se114project.data.remote.response.FileObject;
 
 import java.util.List;
 
+import okhttp3.MultipartBody;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.Headers;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
+import retrofit2.http.Part;
+import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public interface SupabaseService {
@@ -123,5 +129,22 @@ public interface SupabaseService {
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
             @Query("course_id") String courseId // Lưu ý: Tham số truyền vào phải có dạng "eq.ID_LOP"
+    );
+    @Multipart
+    @POST("storage/v1/object/{bucket}/{path}")
+    Call<ResponseBody> uploadFile(
+            @Header("apikey") String apiKey,
+            @Header("Authorization") String token,
+            @Path("bucket") String bucket, // Tên bucket: "materials" hoặc "assignments"
+            @Path("path") String path,     // Tên file trên server (VD: "bai_giang_1.pdf")
+            @Part MultipartBody.Part file  // File thực tế
+    );
+    @POST("storage/v1/object/list/{bucket}")
+    @Headers("Content-Type: application/json")
+    Call<List<FileObject>> listFiles(
+            @Header("apikey") String apiKey,
+            @Header("Authorization") String token,
+            @Path("bucket") String bucket, // Tên bucket: "materials"
+            @Body JsonObject body
     );
 }

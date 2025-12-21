@@ -10,6 +10,13 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -25,12 +32,26 @@ import com.synguyen.se114project.data.entity.Task;
 import com.synguyen.se114project.ui.adapter.SubtaskAdapter;
 import com.synguyen.se114project.viewmodel.student.TaskDetailViewModel;
 import com.synguyen.se114project.viewmodel.student.TimerViewModel;
+import com.synguyen.se114project.BuildConfig;
+import com.synguyen.se114project.data.remote.RetrofitClient;
+import com.synguyen.se114project.data.remote.SupabaseService;
+import com.synguyen.se114project.utils.FileUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.io.File;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+
 
 public class TaskDetailFragment extends Fragment {
 
@@ -49,6 +70,13 @@ public class TaskDetailFragment extends Fragment {
     private ImageView btnBack;
     private View btnMoreOptions;
     private Button btnStart, btnTakeBreak;
+    // UI Upload
+    private View btnUploadLayout;
+    private TextView tvUploadStatus;
+    private ProgressBar pbUpload;
+
+    // Launcher chọn file
+    private ActivityResultLauncher<Intent> filePickerLauncher;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -56,6 +84,18 @@ public class TaskDetailFragment extends Fragment {
         if (getArguments() != null) {
             taskId = getArguments().getString("taskId");
         }
+        // ĐĂNG KÝ LAUNCHER NHẬN FILE
+                filePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                        Uri selectedUri = result.getData().getData();
+                        if (selectedUri != null) {
+                            uploadAssignment(selectedUri);
+                        }
+                    }
+                }
+        );
     }
 
     @Nullable
@@ -88,6 +128,11 @@ public class TaskDetailFragment extends Fragment {
         btnBack = view.findViewById(R.id.btnBack);
         btnMoreOptions = view.findViewById(R.id.btnEditSubtask);
 
+        // Upload View
+        btnUploadLayout = view.findViewById(R.id.layoutUpload);
+        tvUploadStatus = view.findViewById(R.id.tvUploadStatus);
+        pbUpload = view.findViewById(R.id.pbUpload);
+
         // 2. ViewModel
         mViewModel = new ViewModelProvider(this).get(TaskDetailViewModel.class);
         timerViewModel = new ViewModelProvider(requireActivity()).get(TimerViewModel.class);
@@ -105,6 +150,9 @@ public class TaskDetailFragment extends Fragment {
 
         if (btnMoreOptions != null) {
             btnMoreOptions.setOnClickListener(v -> showEditSubtasksDialog());
+        }
+        if (btnUploadLayout != null) {
+            btnUploadLayout.setOnClickListener(v -> openFilePicker());
         }
 
         // 6. Timer Logic
@@ -354,5 +402,69 @@ public class TaskDetailFragment extends Fragment {
         btnClose.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
+    }
+    private void openFilePicker() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("application/pdf");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        filePickerLauncher.launch(Intent.createChooser(intent, "Select Assignment PDF"));
+    }
+
+    // Hàm Upload lên Supabase
+    private void uploadAssignment(Uri fileUri) {
+        if (currentTask == null) return;
+
+        pbUpload.setVisibility(View.VISIBLE);
+        tvUploadStatus.setText("Uploading...");
+        btnUploadLayout.setEnabled(false);
+
+        try {
+            Context context = requireContext();
+            File file = FileUtils.getFileFromUri(context, fileUri);
+
+            // Quy tắc đặt tên file: assign_{taskId}_{userId}.pdf
+            SharedPreferences prefs = context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
+            String userId = prefs.getString("USER_ID", "unknown_user"); // Đảm bảo bạn đã lưu USER_ID khi login
+            String token = prefs.getString("ACCESS_TOKEN", "");
+
+            String fileNameOnServer = "assign_" + currentTask.getId() + "_" + userId + ".pdf";
+
+            // Tạo RequestBody
+            RequestBody requestFile = RequestBody.create(MediaType.parse("application/pdf"), file);
+            MultipartBody.Part body = MultipartBody.Part.createFormData("file", fileNameOnServer, requestFile);
+
+            // Gọi API
+            SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
+            service.uploadFile(BuildConfig.SUPABASE_KEY, "Bearer " + token, "assignments", fileNameOnServer, body)
+                    .enqueue(new Callback<ResponseBody>() {
+                        @Override
+                        public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                            pbUpload.setVisibility(View.GONE);
+                            btnUploadLayout.setEnabled(true);
+
+                            if (response.isSuccessful()) {
+                                Toast.makeText(context, "Nộp bài thành công!", Toast.LENGTH_SHORT).show();
+                                tvUploadStatus.setText("Đã nộp: " + file.getName());
+                                tvUploadStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+                            } else {
+                                Toast.makeText(context, "Lỗi nộp bài: " + response.code(), Toast.LENGTH_SHORT).show();
+                                tvUploadStatus.setText("Lỗi upload. Thử lại.");
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<ResponseBody> call, Throwable t) {
+                            pbUpload.setVisibility(View.GONE);
+                            btnUploadLayout.setEnabled(true);
+                            Toast.makeText(context, "Lỗi mạng", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+        } catch (Exception e) {
+            pbUpload.setVisibility(View.GONE);
+            btnUploadLayout.setEnabled(true);
+            e.printStackTrace();
+            Toast.makeText(getContext(), "Lỗi file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 }
