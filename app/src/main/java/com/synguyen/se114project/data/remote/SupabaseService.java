@@ -2,8 +2,10 @@ package com.synguyen.se114project.data.remote;
 
 import com.google.gson.JsonObject;
 import com.synguyen.se114project.data.entity.Course;
+import com.synguyen.se114project.data.entity.Profile;
 import com.synguyen.se114project.data.entity.Task;
 import com.synguyen.se114project.data.remote.response.AuthResponse;
+import com.synguyen.se114project.data.remote.response.EnrollmentResponse;
 import com.synguyen.se114project.data.remote.response.FileObject;
 
 import java.util.List;
@@ -17,44 +19,37 @@ import retrofit2.http.Header;
 import retrofit2.http.Headers;
 import retrofit2.http.Multipart;
 import retrofit2.http.POST;
+import retrofit2.http.PATCH; // Thêm import PATCH
+import retrofit2.http.DELETE; // Thêm import DELETE
 import retrofit2.http.Part;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public interface SupabaseService {
 
-    // 1. ĐĂNG NHẬP (Trả về AuthResponse thay vì JsonObject)
+    // 1. ĐĂNG NHẬP
     @POST("auth/v1/token?grant_type=password")
     @Headers("Content-Type: application/json")
     Call<AuthResponse> loginUser(
             @Header("apikey") String apiKey,
-            @Body JsonObject body
+            @Body JsonObject body // Login vẫn dùng JsonObject body là ổn
     );
 
-    // 2. LẤY DANH SÁCH TASK (Trả về List<Task> - GSON tự map)
+    // 2. LẤY DANH SÁCH TASK
     @GET("rest/v1/tasks?select=*")
     Call<List<Task>> getTasks(
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
-            @Query("owner_id") String ownerId // Truyền vào: "eq.ID_CUA_USER"
+            @Query("owner_id") String ownerId
     );
 
-    // 3. TẠO TASK MỚI (Upsert)
+    // 3. TẠO TASK MỚI
     @POST("rest/v1/tasks")
     @Headers({"Prefer: return=representation", "Content-Type: application/json"})
     Call<List<Task>> createTask(
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
-            @Body Task task // Truyền thẳng object Task vào
-    );
-
-    // 4. LẤY PROFILE (Để check Role)
-    // Giả sử bạn lưu Role trong bảng users (public)
-    @GET("rest/v1/users?select=*")
-    Call<List<JsonObject>> getUserProfile(
-            @Header("apikey") String apiKey,
-            @Header("Authorization") String token,
-            @Query("id") String queryId // Truyền vào: "eq.ID_CUA_USER"
+            @Body Task task
     );
 
     // 5. LẤY KHÓA HỌC
@@ -64,15 +59,24 @@ public interface SupabaseService {
             @Header("Authorization") String token,
             @Query("owner_id") String ownerId
     );
+
     @GET("rest/v1/tasks?select=*")
     Call<List<Task>> getTasksByCourse(
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
-            @Query("course_id") String courseId // Truyền vào: "eq.ID_KHOA_HOC"
+            @Query("course_id") String courseId
     );
-    Call<List<Course>> createCourse(String supabaseKey, String token, JsonObject json);
 
-    // 6. Đăng kí
+    // --- ĐÃ SỬA: CREATE COURSE (Thêm Annotation và đổi JsonObject -> Course) ---
+    @POST("rest/v1/courses")
+    @Headers({"Prefer: return=representation", "Content-Type: application/json"})
+    Call<List<Course>> createCourse(
+            @Header("apikey") String apiKey,
+            @Header("Authorization") String token,
+            @Body Course course
+    );
+
+    // 6. ĐĂNG KÝ (Signup giữ JsonObject body là hợp lý vì logic đơn giản)
     @POST("auth/v1/signup")
     @Headers("Content-Type: application/json")
     Call<AuthResponse> signUpUser(
@@ -80,71 +84,78 @@ public interface SupabaseService {
             @Body JsonObject body
     );
 
-    // 7. Insert Profile
+    // 7. INSERT PROFILE (Đổi JsonObject -> Profile)
     @POST("rest/v1/profiles")
     @Headers({"Prefer: return=minimal", "Content-Type: application/json"})
     Call<Void> insertProfile(
             @Header("apikey") String apiKey,
-            @Header("Authorization") String token, // "Bearer <access_token>"
-            @Body JsonObject body
+            @Header("Authorization") String token,
+            @Body Profile profile
     );
 
-    // 8.LẤY PROFILE theo id
+    // 8. LẤY PROFILE (Đổi JsonObject -> Profile)
     @GET("rest/v1/profiles?select=*")
-    Call<List<com.google.gson.JsonObject>> getProfile(
+    Call<List<Profile>> getProfile(
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
-            @Query("id") String queryId // "eq.<user_id>"
+            @Query("id") String queryId
     );
 
-    // 9.UPDATE PROFILE theo id
-    @retrofit2.http.PATCH("rest/v1/profiles")
+    // 9. UPDATE PROFILE (Đổi JsonObject -> Profile)
+    @PATCH("rest/v1/profiles")
     @Headers({"Prefer: return=minimal", "Content-Type: application/json"})
     Call<Void> updateProfile(
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
-            @Query("id") String queryId, // "eq.<user_id>"
-            @Body com.google.gson.JsonObject body
+            @Query("id") String queryId,
+            @Body Profile profile
     );
-    // THÊM: Cập nhật Task (Dùng PATCH để sửa 1 phần dữ liệu)
-    @retrofit2.http.PATCH("rest/v1/tasks")
+
+    // 10. UPDATE TASK
+    @PATCH("rest/v1/tasks")
     @Headers({"Prefer: return=minimal", "Content-Type: application/json"})
     Call<Void> updateTask(
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
-            @Query("id") String taskId, // eq.UUID
+            @Query("id") String taskId,
             @Body Task task
     );
 
-    // THÊM: Xóa Task (Xóa mềm hoặc cứng tùy logic, ở đây là xóa cứng trên server)
-    @retrofit2.http.DELETE("rest/v1/tasks")
+    // 11. DELETE TASK
+    @DELETE("rest/v1/tasks")
     Call<Void> deleteTask(
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
-            @Query("id") String taskId // eq.UUID
+            @Query("id") String taskId
     );
 
+    // 12. LẤY SINH VIÊN TRONG LỚP (Dùng EnrollmentResponse thay vì JsonObject)
+    // Lý do: Supabase trả về dạng lồng nhau [{"profiles": {...}}]
     @GET("rest/v1/enrollments?select=profiles(*)")
-    Call<List<JsonObject>> getStudentsInCourse(
+    Call<List<EnrollmentResponse>> getStudentsInCourse(
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
-            @Query("course_id") String courseId // Lưu ý: Tham số truyền vào phải có dạng "eq.ID_LOP"
+            @Query("course_id") String courseId
     );
+
+    // 13. UPLOAD FILE
     @Multipart
     @POST("storage/v1/object/{bucket}/{path}")
     Call<ResponseBody> uploadFile(
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
-            @Path("bucket") String bucket, // Tên bucket: "materials" hoặc "assignments"
-            @Path("path") String path,     // Tên file trên server (VD: "bai_giang_1.pdf")
-            @Part MultipartBody.Part file  // File thực tế
+            @Path("bucket") String bucket,
+            @Path("path") String path,
+            @Part MultipartBody.Part file
     );
+
+    // 14. LIST FILES
     @POST("storage/v1/object/list/{bucket}")
     @Headers("Content-Type: application/json")
     Call<List<FileObject>> listFiles(
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
-            @Path("bucket") String bucket, // Tên bucket: "materials"
+            @Path("bucket") String bucket,
             @Body JsonObject body
     );
 }

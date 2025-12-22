@@ -8,9 +8,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
+import androidx.work.Constraints;
+import androidx.work.NetworkType;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+import java.util.concurrent.TimeUnit;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.synguyen.se114project.R;
+import com.synguyen.se114project.worker.SyncWorker;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -47,5 +53,25 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+        setupAutoSync();
+    }
+    private void setupAutoSync() {
+        // 1. Tạo điều kiện: Chỉ chạy khi có mạng (CONNECTED)
+        Constraints constraints = new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build();
+
+        // 2. Tạo yêu cầu chạy định kỳ (mỗi 15 phút - thời gian tối thiểu của Android)
+        PeriodicWorkRequest syncRequest =
+                new PeriodicWorkRequest.Builder(SyncWorker.class, 15, TimeUnit.MINUTES)
+                        .setConstraints(constraints)
+                        .build();
+
+        // 3. Đưa vào hàng đợi (EnqueueUnique để không bị trùng lặp)
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                "SyncTasksWork",
+                androidx.work.ExistingPeriodicWorkPolicy.KEEP, // Nếu đang có rồi thì giữ nguyên
+                syncRequest
+        );
     }
 }

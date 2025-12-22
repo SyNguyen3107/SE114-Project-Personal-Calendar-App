@@ -2,6 +2,7 @@ package com.synguyen.se114project.data.repository;
 
 import com.google.gson.JsonObject;
 import com.synguyen.se114project.BuildConfig;
+import com.synguyen.se114project.data.entity.Profile; // 1. Import Entity Profile
 import com.synguyen.se114project.data.remote.RetrofitClient;
 import com.synguyen.se114project.data.remote.SupabaseService;
 import com.synguyen.se114project.data.remote.response.AuthResponse;
@@ -43,13 +44,8 @@ public class AuthRepository {
     }
 
     // ================= SIGN UP FLOW =================
-    /**
-     * Flow:
-     * 1. Gọi API Signup của Supabase Auth
-     * 2. Nếu thành công -> Lấy ID user -> Gọi API Insert vào bảng 'profiles'
-     */
-    // ĐÃ SỬA TÊN HÀM TẠI ĐÂY:
     public void signUpAndCreateProfile(String email, String password, String fullName, ResultCallback<SignUpResult> callback) {
+        // Bước 1: Sign up vẫn dùng JsonObject (vì API signUpUser yêu cầu JsonObject)
         JsonObject body = new JsonObject();
         body.addProperty("email", email);
         body.addProperty("password", password);
@@ -64,7 +60,6 @@ public class AuthRepository {
                 }
 
                 AuthResponse authData = response.body();
-                // Dùng hàm getValidAccessToken() để lấy token an toàn
                 String accessToken = authData.getValidAccessToken();
 
                 if (authData.user == null || accessToken == null) {
@@ -76,17 +71,19 @@ public class AuthRepository {
                 String userEmail = authData.user.email;
 
                 // --- BƯỚC 2: TẠO PROFILE (public.profiles) ---
-                JsonObject profileBody = new JsonObject();
-                profileBody.addProperty("id", userId);
-                profileBody.addProperty("full_name", fullName);
-                profileBody.addProperty("email", userEmail);
-                profileBody.addProperty("avatar_url", "default_avatar.png");
-                profileBody.addProperty("role", "student");
+                // SỬA ĐỔI: Dùng đối tượng Profile thay vì JsonObject
+                Profile profile = new Profile();
+                profile.setId(userId);
+                profile.setFullName(fullName); // Đảm bảo Profile.java có setter này
+                profile.setEmail(userEmail);
+                profile.setAvatarUrl("default_avatar.png");
+                profile.setRole("student"); // Mặc định là student
 
+                // Gọi API insertProfile với đối tượng Profile
                 supabaseService.insertProfile(
                         BuildConfig.SUPABASE_KEY,
                         "Bearer " + accessToken,
-                        profileBody
+                        profile
                 ).enqueue(new Callback<Void>() {
 
                     @Override

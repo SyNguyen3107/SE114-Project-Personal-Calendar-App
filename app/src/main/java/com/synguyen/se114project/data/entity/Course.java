@@ -17,19 +17,19 @@ public class Course {
     public String id;
 
     @ColumnInfo(name = "name")
-    public String name; // Tên môn (VD: Mathematics)
+    public String name; // Tên môn
 
     @ColumnInfo(name = "description")
-    public String description; // Mô tả ngắn (VD: Chapter 5)
+    public String description; // Mô tả ngắn
 
     @ColumnInfo(name = "teacher_name")
-    public String teacherName; // Tên giáo viên (VD: Jason Mayor)
+    public String teacherName; // Tên giáo viên
 
     @ColumnInfo(name = "time_slot")
-    public String timeSlot; // Giờ học (VD: 05:30 - 06:30)
+    public String timeSlot; // Giờ học
 
     @ColumnInfo(name = "date_info")
-    public String dateInfo; // Ngày học (VD: 04/21)
+    public String dateInfo;
 
     @ColumnInfo(name = "color_hex")
     public String colorHex; // Mã màu nền (VD: #2196F3)

@@ -133,7 +133,7 @@ public class TaskRepository {
 
                 if (response.isSuccessful()) {
                     // Nếu xóa trên cloud thành công -> Xóa cứng luôn ở Local để dọn dẹp
-                    mTaskDao.deleteTask(task);
+                    mTaskDao.deletePhysicalTask(task);
                 }
             } catch (Exception e) {
                 Log.e("Sync", "Delete failed: " + e.getMessage());

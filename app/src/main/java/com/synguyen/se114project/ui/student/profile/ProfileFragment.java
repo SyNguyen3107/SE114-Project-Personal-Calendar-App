@@ -20,6 +20,7 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.synguyen.se114project.R;
+import com.synguyen.se114project.data.entity.Profile; // Import Entity Profile
 import com.synguyen.se114project.data.repository.ProfileRepository;
 
 public class ProfileFragment extends Fragment {
@@ -32,14 +33,12 @@ public class ProfileFragment extends Fragment {
 
     private ProfileRepository profileRepository;
 
-    // ====== Auth Prefs  ======
-    // Trong LoginActivity.java
-    private static final String AUTH_PREFS = "auth_prefs";
-    private static final String KEY_ACCESS_TOKEN = "access_token";
-    private static final String KEY_USER_ID = "user_id";
+    // ====== Auth Prefs (Đã sửa cho khớp với LoginActivity & Worker) ======
+    private static final String APP_PREFS = "AppPrefs"; // Tên file thống nhất
+    private static final String KEY_ACCESS_TOKEN = "ACCESS_TOKEN"; // Key viết hoa
+    private static final String KEY_USER_ID = "USER_ID"; // Key viết hoa
 
-    // ====== Local Prefs  ======
-    // Trong ProfileFragment.java
+    // ====== Local Prefs (Lưu avatar tạm dưới máy) ======
     private static final String LOCAL_PREFS = "UserProfile";
     private static final String KEY_AVATAR_URI = "KEY_AVATAR_URI";
 
@@ -96,7 +95,8 @@ public class ProfileFragment extends Fragment {
 
     // ===================== SUPABASE =====================
     private void loadProfileFromSupabase() {
-        SharedPreferences authPref = requireActivity().getSharedPreferences(AUTH_PREFS, Context.MODE_PRIVATE);
+        // Dùng tên file Prefs chuẩn "AppPrefs"
+        SharedPreferences authPref = requireActivity().getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE);
         String token = authPref.getString(KEY_ACCESS_TOKEN, "");
         String userId = authPref.getString(KEY_USER_ID, "");
 
@@ -105,30 +105,34 @@ public class ProfileFragment extends Fragment {
             return;
         }
 
-        profileRepository.getProfile(token, userId, new ProfileRepository.ResultCallback<com.google.gson.JsonObject>() {
+        // SỬA ĐỔI: Callback nhận vào Profile (không phải JsonObject)
+        profileRepository.getProfile(token, userId, new ProfileRepository.ResultCallback<Profile>() {
             @Override
-            public void onSuccess(com.google.gson.JsonObject data) {
-                requireActivity().runOnUiThread(() -> {
-                    String fullName = data.has("full_name") && !data.get("full_name").isJsonNull()
-                            ? data.get("full_name").getAsString() : "";
-                    String email = data.has("email") && !data.get("email").isJsonNull()
-                            ? data.get("email").getAsString() : "";
+            public void onSuccess(Profile profile) {
+                if (isAdded()) { // Kiểm tra Fragment còn tồn tại không
+                    requireActivity().runOnUiThread(() -> {
+                        // Dùng Getter của Object Profile
+                        String fullName = profile.getFullName();
+                        String email = profile.getEmail();
 
-                    etName.setText(fullName);
-                    etEmail.setText(email);
+                        etName.setText(fullName != null ? fullName : "");
+                        etEmail.setText(email != null ? email : "");
 
-                    // Avatar: nếu chưa chọn ảnh local thì dùng ảnh tĩnh
-                    if (selectedImageUri == null) {
-                        imgAvatar.setImageResource(R.drawable.ic_launcher_background);
-                    }
-                });
+                        // Avatar: nếu chưa chọn ảnh local thì dùng ảnh tĩnh
+                        if (selectedImageUri == null) {
+                            imgAvatar.setImageResource(R.drawable.ic_launcher_background);
+                        }
+                    });
+                }
             }
 
             @Override
             public void onError(String message) {
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show()
-                );
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(() ->
+                            Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show()
+                    );
+                }
             }
         });
     }
@@ -140,28 +144,32 @@ public class ProfileFragment extends Fragment {
             return;
         }
 
-        SharedPreferences authPref = requireActivity().getSharedPreferences(AUTH_PREFS, Context.MODE_PRIVATE);
+        SharedPreferences authPref = requireActivity().getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE);
         String token = authPref.getString(KEY_ACCESS_TOKEN, "");
         String userId = authPref.getString(KEY_USER_ID, "");
 
         if (token.isEmpty() || userId.isEmpty()) {
-            Toast.makeText(getContext(), "Bạn chưa đăng nhập (thiếu token/userId)", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Bạn chưa đăng nhập", Toast.LENGTH_SHORT).show();
             return;
         }
 
         profileRepository.updateFullName(token, userId, newName, new ProfileRepository.ResultCallback<Void>() {
             @Override
             public void onSuccess(Void data) {
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(getContext(), "Profile updated!", Toast.LENGTH_SHORT).show()
-                );
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(() ->
+                            Toast.makeText(getContext(), "Cập nhật thành công!", Toast.LENGTH_SHORT).show()
+                    );
+                }
             }
 
             @Override
             public void onError(String message) {
-                requireActivity().runOnUiThread(() ->
-                        Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show()
-                );
+                if (isAdded()) {
+                    requireActivity().runOnUiThread(() ->
+                            Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show()
+                    );
+                }
             }
         });
     }

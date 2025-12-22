@@ -4,21 +4,26 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.google.gson.JsonObject;
+
 import com.synguyen.se114project.R;
+import com.synguyen.se114project.data.entity.Profile; // Import đúng Entity Profile
+
 import java.util.List;
 
 public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentViewHolder> {
 
-    private List<JsonObject> studentList;
+    // 1. Thay đổi từ List<JsonObject> sang List<Profile>
+    private List<Profile> studentList;
 
-    public StudentAdapter(List<JsonObject> studentList) {
+    public StudentAdapter(List<Profile> studentList) {
         this.studentList = studentList;
     }
 
-    public void updateData(List<JsonObject> newList) {
+    // 2. Cập nhật hàm updateData nhận List<Profile>
+    public void updateData(List<Profile> newList) {
         this.studentList = newList;
         notifyDataSetChanged();
     }
@@ -32,20 +37,20 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentV
 
     @Override
     public void onBindViewHolder(@NonNull StudentViewHolder holder, int position) {
-        JsonObject item = studentList.get(position);
+        Profile student = studentList.get(position);
 
-        // Supabase trả về dạng: { "user_id": "...", "profiles": { "full_name": "...", "email": "..." } }
-        if (item.has("profiles") && !item.get("profiles").isJsonNull()) {
-            JsonObject profile = item.get("profiles").getAsJsonObject();
+        // 3. Sử dụng Getter của đối tượng Profile thay vì parse JSON
+        // Lưu ý: Đảm bảo class Profile của bạn đã có các hàm getter này (hoặc truy cập field public)
+        String name = student.getFullName();
+        String email = student.getEmail();
 
-            String name = profile.has("full_name") && !profile.get("full_name").isJsonNull()
-                    ? profile.get("full_name").getAsString() : "Sinh viên";
-            String email = profile.has("email") && !profile.get("email").isJsonNull()
-                    ? profile.get("email").getAsString() : "";
-
-            holder.tvName.setText(name);
-            holder.tvEmail.setText(email);
+        // Fallback nếu null
+        if (name == null || name.isEmpty()) {
+            name = "Sinh viên";
         }
+
+        holder.tvName.setText(name);
+        holder.tvEmail.setText(email != null ? email : "");
     }
 
     @Override
@@ -55,6 +60,7 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentV
 
     static class StudentViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvEmail;
+
         public StudentViewHolder(@NonNull View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tvStudentName);

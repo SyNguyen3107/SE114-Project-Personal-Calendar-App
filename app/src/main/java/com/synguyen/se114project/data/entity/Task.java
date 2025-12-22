@@ -69,7 +69,7 @@ public class Task {
         this.lastUpdated = System.currentTimeMillis();
         this.courseId = null;
         this.attachmentUrl = null;
-        this.duration = 25 * 60 * 1000; // Mặc định 25 phút nếu không nhập
+        this.duration = 30 * 60 * 1000; // Mặc định 30 phút nếu không nhập
     }
 
     @Ignore

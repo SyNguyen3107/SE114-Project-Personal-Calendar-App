@@ -83,4 +83,6 @@ dependencies {
 
     // Thêm Logging để xem API chạy thế nào (Debug cực tiện)
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+
+    implementation("androidx.work:work-runtime:2.9.0")
 }

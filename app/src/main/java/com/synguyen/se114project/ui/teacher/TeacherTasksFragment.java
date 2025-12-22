@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.content.Intent;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -61,7 +62,15 @@ public class TeacherTasksFragment extends Fragment {
         fabAdd = view.findViewById(R.id.fabAddTask);
 
         rcvTasks.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new TeacherTaskAdapter(new ArrayList<>());
+        adapter = new TeacherTaskAdapter(new ArrayList<>(), task -> {
+            // Sự kiện khi bấm vào 1 bài tập -> Mở màn hình chi tiết
+            Intent intent = new Intent(getContext(), TeacherTaskDetailActivity.class);
+            intent.putExtra("TASK_ID", task.getId());
+            intent.putExtra("TASK_TITLE", task.getTitle());
+            intent.putExtra("TASK_DESC", task.getSubTitle());
+            intent.putExtra("TASK_DEADLINE", task.getTime());
+            startActivity(intent);
+        });
         rcvTasks.setAdapter(adapter);
 
         // 4. Load dữ liệu & Sự kiện
@@ -78,10 +87,6 @@ public class TeacherTasksFragment extends Fragment {
         if (token == null || courseId == null) return;
 
         SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
-
-        // SỬA LẠI CÁCH GỌI HÀM:
-        // 1. Dùng getTasksByCourse vừa tạo ở Bước 1
-        // 2. Kiểu dữ liệu trong Call là List<Task> (không phải JsonObject)
         service.getTasksByCourse(BuildConfig.SUPABASE_KEY, token, "eq." + courseId)
                 .enqueue(new Callback<List<Task>>() { // <--- Quan trọng: List<Task>
                     @Override
@@ -89,10 +94,6 @@ public class TeacherTasksFragment extends Fragment {
                         if (response.isSuccessful() && response.body() != null) {
                             List<Task> tasks = response.body();
 
-                            // Lúc này 'tasks' đã là List<Task>, không cần ép kiểu từ JsonObject nữa
-                            // adapter.setData(tasks); // Giả sử adapter của bạn là TeacherTaskAdapter
-
-                            // Log kiểm tra
                             android.util.Log.d("DEBUG_TASK", "Đã lấy được " + tasks.size() + " bài tập.");
                         } else {
                             Toast.makeText(getContext(), "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show();
@@ -156,7 +157,7 @@ public class TeacherTasksFragment extends Fragment {
             public void onResponse(Call<List<Task>> call, Response<List<Task>> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(getContext(), "Đã giao bài tập!", Toast.LENGTH_SHORT).show();
-                    // loadTasks(); // Load lại danh sách nếu cần
+                    loadTasks();
                 } else {
                     Toast.makeText(getContext(), "Lỗi: " + response.code(), Toast.LENGTH_SHORT).show();
                 }

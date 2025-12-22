@@ -3,6 +3,7 @@ package com.synguyen.se114project.ui.teacher;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,10 +15,12 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.gson.JsonObject;
+import com.synguyen.se114project.BuildConfig;
 import com.synguyen.se114project.R;
+import com.synguyen.se114project.data.entity.Profile;
 import com.synguyen.se114project.data.remote.RetrofitClient;
 import com.synguyen.se114project.data.remote.SupabaseService;
+import com.synguyen.se114project.data.remote.response.EnrollmentResponse; // Import class này
 import com.synguyen.se114project.ui.adapter.StudentAdapter;
 
 import java.util.ArrayList;
@@ -36,7 +39,7 @@ public class TeacherStudentsFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_teacher_students, container, false); // Nhớ tạo layout này
+        View view = inflater.inflate(R.layout.fragment_teacher_students, container, false);
 
         if (getArguments() != null) {
             courseId = getArguments().getString("COURSE_ID");
@@ -44,6 +47,8 @@ public class TeacherStudentsFragment extends Fragment {
 
         rcvStudents = view.findViewById(R.id.rcvStudents);
         rcvStudents.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        // Adapter giờ nhận List<Profile>
         adapter = new StudentAdapter(new ArrayList<>());
         rcvStudents.setAdapter(adapter);
 
@@ -59,37 +64,42 @@ public class TeacherStudentsFragment extends Fragment {
         if (token == null || courseId == null) return;
 
         SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
-        // Lọc sinh viên theo courseId
-        service.getStudentsInCourse(RetrofitClient.SUPABASE_KEY, token, "eq." + courseId)
-                .enqueue(new Callback<List<JsonObject>>() {
+
+        // QUAN TRỌNG: Kiểu dữ liệu trong Callback phải khớp với SupabaseService
+        // Call<List<EnrollmentResponse>>
+        service.getStudentsInCourse(BuildConfig.SUPABASE_KEY, token, "eq." + courseId)
+                .enqueue(new Callback<List<EnrollmentResponse>>() { // <--- SỬA Ở ĐÂY
                     @Override
-                    public void onResponse(Call<List<JsonObject>> call, Response<List<JsonObject>> response) {
-                        // 1. IN LOG XEM ID LỚP ĐANG GỌI LÀ GÌ
-                        android.util.Log.d("DEBUG_STUDENT", "Đang gọi API với Course ID: " + courseId);
-
+                    public void onResponse(Call<List<EnrollmentResponse>> call, Response<List<EnrollmentResponse>> response) {
+                        // Tham số 'call' và 'response' cũng phải là EnrollmentResponse
                         if (response.isSuccessful() && response.body() != null) {
-                            // 2. IN LOG XEM DỮ LIỆU SERVER TRẢ VỀ CÁI GÌ
-                            android.util.Log.d("DEBUG_STUDENT", "Số lượng tìm thấy: " + response.body().size());
-                            android.util.Log.d("DEBUG_STUDENT", "Nội dung JSON: " + response.body().toString());
+                            List<EnrollmentResponse> wrapperList = response.body();
 
-                            adapter.updateData(response.body());
+                            // Chuyển đổi từ Wrapper sang List<Profile> để đưa vào Adapter
+                            List<Profile> profileList = new ArrayList<>();
+                            for (EnrollmentResponse item : wrapperList) {
+                                if (item.getProfile() != null) {
+                                    profileList.add(item.getProfile());
+                                }
+                            }
 
-                            if (response.body().isEmpty()) {
-                                Toast.makeText(getContext(), "Lớp chưa có sinh viên (List Empty)", Toast.LENGTH_SHORT).show();
+                            // Cập nhật Adapter
+                            adapter.updateData(profileList);
+
+                            if (profileList.isEmpty()) {
+                                Toast.makeText(getContext(), "Lớp chưa có sinh viên", Toast.LENGTH_SHORT).show();
                             }
                         } else {
-                            // 3. IN LOG LỖI NẾU CÓ
-                            android.util.Log.e("DEBUG_STUDENT", "Lỗi API Code: " + response.code());
-                            try {
-                                android.util.Log.e("DEBUG_STUDENT", "Lỗi Body: " + response.errorBody().string());
-                            } catch (Exception e) { e.printStackTrace(); }
+                            Log.e("TeacherStudents", "Lỗi API: " + response.code());
+                            Toast.makeText(getContext(), "Lỗi tải danh sách", Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     @Override
-                    public void onFailure(Call<List<JsonObject>> call, Throwable t) {
-                        android.util.Log.e("DEBUG_STUDENT", "Lỗi mạng/Crash: " + t.getMessage());
-                        t.printStackTrace();
+                    public void onFailure(Call<List<EnrollmentResponse>> call, Throwable t) {
+                        // Tham số 'call' cũng phải là EnrollmentResponse
+                        Log.e("TeacherStudents", "Lỗi mạng: " + t.getMessage());
+                        Toast.makeText(getContext(), "Lỗi kết nối", Toast.LENGTH_SHORT).show();
                     }
                 });
     }

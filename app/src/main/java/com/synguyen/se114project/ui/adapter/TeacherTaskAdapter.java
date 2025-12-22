@@ -1,26 +1,37 @@
-package com.synguyen.se114project.ui.adapter; // Lưu ý package
+package com.synguyen.se114project.ui.adapter;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.google.gson.JsonObject;
+
 import com.synguyen.se114project.R;
+import com.synguyen.se114project.data.entity.Task;
 
 import java.util.List;
 
 public class TeacherTaskAdapter extends RecyclerView.Adapter<TeacherTaskAdapter.TaskViewHolder> {
 
-    private List<JsonObject> taskList;
+    private List<Task> taskList;
+    private OnTaskClickListener listener; // 1. Khai báo Listener
 
-    public TeacherTaskAdapter(List<JsonObject> taskList) {
-        this.taskList = taskList;
+    // 2. Interface lắng nghe sự kiện
+    public interface OnTaskClickListener {
+        void onTaskClick(Task task);
     }
 
-    public void updateData(List<JsonObject> newList) {
-        this.taskList = newList;
+    // 3. Cập nhật Constructor để nhận Listener
+    public TeacherTaskAdapter(List<Task> taskList, OnTaskClickListener listener) {
+        this.taskList = taskList;
+        this.listener = listener;
+    }
+
+    // Hàm cập nhật dữ liệu
+    public void updateData(List<Task> newTasks) {
+        this.taskList = newTasks;
         notifyDataSetChanged();
     }
 
@@ -33,29 +44,35 @@ public class TeacherTaskAdapter extends RecyclerView.Adapter<TeacherTaskAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull TaskViewHolder holder, int position) {
-        JsonObject task = taskList.get(position);
-
-        // Kiểm tra null an toàn tránh crash
-        String title = task.has("title") && !task.get("title").isJsonNull()
-                ? task.get("title").getAsString() : "Không tiêu đề";
-        String time = task.has("time") && !task.get("time").isJsonNull()
-                ? task.get("time").getAsString() : "---";
-
-        holder.tvTitle.setText(title);
-        holder.tvDeadline.setText("Hạn: " + time);
+        Task task = taskList.get(position);
+        holder.bind(task);
     }
 
     @Override
     public int getItemCount() {
-        return taskList != null ? taskList.size() : 0;
+        return taskList == null ? 0 : taskList.size();
     }
 
-    static class TaskViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitle, tvDeadline;
+    class TaskViewHolder extends RecyclerView.ViewHolder {
+        TextView tvTitle, tvDeadline, tvDesc;
+
         public TaskViewHolder(@NonNull View itemView) {
             super(itemView);
             tvTitle = itemView.findViewById(R.id.tvTaskTitle);
             tvDeadline = itemView.findViewById(R.id.tvTaskDeadline);
+            // tvDesc = itemView.findViewById(R.id.tvTaskDesc); // Nếu layout có
+
+            // 4. Bắt sự kiện Click vào cả Item
+            itemView.setOnClickListener(v -> {
+                if (listener != null && getAdapterPosition() != RecyclerView.NO_POSITION) {
+                    listener.onTaskClick(taskList.get(getAdapterPosition()));
+                }
+            });
+        }
+
+        public void bind(Task task) {
+            tvTitle.setText(task.getTitle());
+            tvDeadline.setText("Deadline: " + task.getTime());
         }
     }
 }
