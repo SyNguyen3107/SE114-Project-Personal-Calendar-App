@@ -66,8 +66,6 @@ public interface SupabaseService {
             @Header("Authorization") String token,
             @Query("course_id") String courseId
     );
-
-    // --- ĐÃ SỬA: CREATE COURSE (Thêm Annotation và đổi JsonObject -> Course) ---
     @POST("rest/v1/courses")
     @Headers({"Prefer: return=representation", "Content-Type: application/json"})
     Call<List<Course>> createCourse(
@@ -84,7 +82,7 @@ public interface SupabaseService {
             @Body JsonObject body
     );
 
-    // 7. INSERT PROFILE (Đổi JsonObject -> Profile)
+    // 7. INSERT PROFILE
     @POST("rest/v1/profiles")
     @Headers({"Prefer: return=minimal", "Content-Type: application/json"})
     Call<Void> insertProfile(
@@ -93,7 +91,7 @@ public interface SupabaseService {
             @Body Profile profile
     );
 
-    // 8. LẤY PROFILE (Đổi JsonObject -> Profile)
+    // 8. LẤY PROFILE
     @GET("rest/v1/profiles?select=*")
     Call<List<Profile>> getProfile(
             @Header("apikey") String apiKey,
@@ -101,7 +99,7 @@ public interface SupabaseService {
             @Query("id") String queryId
     );
 
-    // 9. UPDATE PROFILE (Đổi JsonObject -> Profile)
+    // 9. UPDATE PROFILE
     @PATCH("rest/v1/profiles")
     @Headers({"Prefer: return=minimal", "Content-Type: application/json"})
     Call<Void> updateProfile(

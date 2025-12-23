@@ -14,7 +14,15 @@ public class FileObject {
 
     @SerializedName("metadata")
     public MetaData metadata;
-
+    // Getter
+    public String getName() { return name; }
+    public String getSize() {
+        if (metadata != null) {
+            long sizeKb = metadata.size / 1024;
+            return sizeKb + " KB";
+        }
+        return "0 KB";
+    }
     public static class MetaData {
         @SerializedName("size")
         public long size;
