@@ -25,12 +25,14 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.gson.JsonObject;
 import com.synguyen.se114project.BuildConfig;
 import com.synguyen.se114project.R;
 import com.synguyen.se114project.data.entity.Subtask;
 import com.synguyen.se114project.data.entity.Task;
 import com.synguyen.se114project.data.remote.RetrofitClient;
 import com.synguyen.se114project.data.remote.SupabaseService;
+import com.synguyen.se114project.data.remote.response.FileObject;
 import com.synguyen.se114project.ui.adapter.SubtaskAdapter;
 import com.synguyen.se114project.utils.FileUtils;
 import com.synguyen.se114project.viewmodel.student.TaskDetailViewModel;
@@ -144,6 +146,7 @@ public class TaskDetailFragment extends Fragment {
         // 4. Load Data
         if (taskId != null) {
             loadTaskData();
+            checkExistingSubmission();
         }
 
         // 5. Events
@@ -182,58 +185,79 @@ public class TaskDetailFragment extends Fragment {
                 .show();
     }
 
+    private void checkExistingSubmission() {
+        if (taskId == null) return;
+
+        SharedPreferences prefs = requireActivity().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
+        String token = prefs.getString("ACCESS_TOKEN", "");
+        String userId = prefs.getString("USER_ID", "");
+
+        JsonObject body = new JsonObject();
+        body.addProperty("prefix", "assign_" + taskId + "_" + userId);
+
+        SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
+        service.listFiles(BuildConfig.SUPABASE_KEY, "Bearer " + token, "assignments", body)
+                .enqueue(new Callback<List<FileObject>>() {
+                    @Override
+                    public void onResponse(Call<List<FileObject>> call, Response<List<FileObject>> response) {
+                        if (isAdded() && response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                            FileObject existingFile = response.body().get(0);
+                            tvUploadStatus.setText("Đã nộp: " + existingFile.name);
+                            tvUploadStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<List<FileObject>> call, Throwable t) {
+                    }
+                });
+    }
+
     private void uploadSubmission() {
         if (selectedFileUri == null || currentTask == null) return;
 
+        // UI Loading
         pbUpload.setVisibility(View.VISIBLE);
         tvUploadStatus.setText("Đang tải lên...");
-        btnUploadLayout.setEnabled(false);
+        btnUploadLayout.setEnabled(false); // Khóa nút bấm
 
         try {
-            // 1. File gốc (Tên có thể chứa tiếng Việt/Dấu cách -> Gây lỗi)
+            // 1. Chuyển Uri thành File thật
             File file = FileUtils.getFileFromUri(requireContext(), selectedFileUri);
 
-            // 2. Tạo tên file chuẩn cho Server (Chỉ dùng ASCII: a-z, 0-9, _, -)
-            // Format: assign_TASKID_USERID_TIMESTAMP.pdf
+            // 2. Tạo RequestBody (PDF)
+            RequestBody requestFile = RequestBody.create(MediaType.parse("application/pdf"), file);
+            MultipartBody.Part body = MultipartBody.Part.createFormData("file", file.getName(), requestFile);
+
+            // 3. Lấy thông tin User & Token
             SharedPreferences prefs = requireActivity().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
             String token = prefs.getString("ACCESS_TOKEN", "");
             String userId = prefs.getString("USER_ID", "");
 
-            // Dùng System.currentTimeMillis() để đảm bảo tên không trùng
-            String serverFileName = "assign_" + currentTask.getId() + "_" + userId + "_" + System.currentTimeMillis() + ".pdf";
+            // 4. Tạo tên file unique theo userId để hỗ trợ ghi đè
+            String serverFileName = "assign_" + currentTask.getId() + "_" + userId + ".pdf";
 
-            // 3. RequestBody
-            RequestBody requestFile = RequestBody.create(MediaType.parse("application/pdf"), file);
-
-            // --- QUAN TRỌNG NHẤT: SỬA DÒNG NÀY ---
-            // Thay vì dùng file.getName() (chứa tiếng Việt), hãy dùng serverFileName (tiếng Anh)
-            MultipartBody.Part body = MultipartBody.Part.createFormData("file", serverFileName, requestFile);
-            // -------------------------------------
-
+            // 5. Gọi API với x-upsert: true
             SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
-
-            // 4. Gọi API
-            service.uploadFile(BuildConfig.SUPABASE_KEY, "Bearer " + token, "assignments", serverFileName, body)
+            service.uploadFile(BuildConfig.SUPABASE_KEY, "Bearer " + token, "true", "assignments", serverFileName, body)
                     .enqueue(new Callback<ResponseBody>() {
                         @Override
                         public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                            // Reset UI state
                             pbUpload.setVisibility(View.GONE);
                             btnUploadLayout.setEnabled(true);
 
                             if (response.isSuccessful()) {
                                 Toast.makeText(getContext(), "Nộp bài thành công!", Toast.LENGTH_SHORT).show();
-                                tvUploadStatus.setText("Đã nộp thành công!");
+                                tvUploadStatus.setText("Đã nộp: " + file.getName());
                                 tvUploadStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+
+                                // Clear uri để tránh nộp lại file cũ
                                 selectedFileUri = null;
                             } else {
-                                // In lỗi chi tiết ra Logcat để debug nếu vẫn lỗi 400
-                                try {
-                                    String errorBody = response.errorBody().string();
-                                    android.util.Log.e("UPLOAD_ERROR", "Code: " + response.code() + " Body: " + errorBody);
-                                } catch (Exception e) {}
-
                                 Toast.makeText(getContext(), "Lỗi upload: " + response.code(), Toast.LENGTH_SHORT).show();
-                                tvUploadStatus.setText("Lỗi upload.");
+                                tvUploadStatus.setText("Lỗi tải lên. Nhấn để thử lại.");
+                                tvUploadStatus.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
                             }
                         }
 
@@ -241,7 +265,8 @@ public class TaskDetailFragment extends Fragment {
                         public void onFailure(Call<ResponseBody> call, Throwable t) {
                             pbUpload.setVisibility(View.GONE);
                             btnUploadLayout.setEnabled(true);
-                            Toast.makeText(getContext(), "Lỗi mạng", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "Lỗi mạng: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                            tvUploadStatus.setText("Lỗi mạng. Nhấn để thử lại.");
                         }
                     });
 
@@ -249,6 +274,7 @@ public class TaskDetailFragment extends Fragment {
             pbUpload.setVisibility(View.GONE);
             btnUploadLayout.setEnabled(true);
             e.printStackTrace();
+            Toast.makeText(getContext(), "Lỗi file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 

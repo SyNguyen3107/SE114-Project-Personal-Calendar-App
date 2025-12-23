@@ -62,6 +62,10 @@ public class TaskRepository {
 
     public void insert(Task task) {
         AppDatabase.databaseWriteExecutor.execute(() -> {
+            // Lấy USER_ID từ SharedPreferences để làm owner_id
+            String userId = mPrefs.getString("USER_ID", "");
+            task.setOwnerId(userId);
+
             // Bước 1: Lưu vào Room trước (Để UI hiện ngay lập tức)
             task.setSynced(false);
             mTaskDao.insertTask(task);
@@ -80,9 +84,8 @@ public class TaskRepository {
                     mTaskDao.updateTask(task);
                     Log.d("Sync", "Pushed task to Cloud success: " + task.getTitle());
                 } else {
-                    Log.e("Sync", "Failed to push task: " + response.code());
+                    Log.e("Sync", "Failed to push task: " + response.code() + " - " + response.message());
                     // Nếu thất bại, task vẫn còn trong Room với isSynced = false
-                    // WorkManager sẽ quét và xử lý sau.
                 }
             } catch (Exception e) {
                 Log.e("Sync", "Network error: " + e.getMessage());
@@ -144,21 +147,17 @@ public class TaskRepository {
 
     // Insert Task + Subtasks (Logic cho AddEditFragment)
     public void insertTaskWithSubtasks(Task task, List<Subtask> subtasks) {
-        AppDatabase.databaseWriteExecutor.execute(() -> {
-            // ID của Task cha đã có sẵn (UUID)
-            String parentId = task.getId();
+        insert(task); // Sử dụng hàm insert đã có logic Sync
 
-            // Phải lưu Task cha TRƯỚC để thỏa mãn ràng buộc khóa ngoại
-            mTaskDao.insertTask(task);
-
-            // Gán ID cho con và lưu con
-            if (subtasks != null && !subtasks.isEmpty()) {
+        // Gán ID cho con và lưu con
+        if (subtasks != null && !subtasks.isEmpty()) {
+            AppDatabase.databaseWriteExecutor.execute(() -> {
                 for (Subtask sub : subtasks) {
-                    sub.setTaskId(parentId);
+                    sub.setTaskId(task.getId());
                 }
                 mTaskDao.insertSubtasks(subtasks);
-            }
-        });
+            });
+        }
     }
 
     // --- WRITE OPERATIONS (SUBTASK) ---

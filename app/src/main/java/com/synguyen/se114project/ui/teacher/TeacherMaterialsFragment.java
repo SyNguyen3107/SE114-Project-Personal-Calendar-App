@@ -149,7 +149,8 @@ public class TeacherMaterialsFragment extends Fragment {
             SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
 
             // bucket name = "materials" (Bạn phải tạo bucket này trên Supabase Dashboard trước)
-            service.uploadFile(BuildConfig.SUPABASE_KEY, "Bearer " + token, "materials", fileNameOnServer, body)
+            // Thêm tham số "false" cho x-upsert
+            service.uploadFile(BuildConfig.SUPABASE_KEY, "Bearer " + token, "false", "materials", fileNameOnServer, body)
                     .enqueue(new Callback<ResponseBody>() {
                         @Override
                         public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {

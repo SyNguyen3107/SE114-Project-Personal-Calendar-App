@@ -6,6 +6,8 @@ import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.UUID;
 
 @Entity(tableName = "task_table")
@@ -13,52 +15,64 @@ public class Task {
     @PrimaryKey
     @NonNull
     @ColumnInfo(name = "id")
+    @SerializedName("id")
     public String id;
 
     @ColumnInfo(name = "title")
+    @SerializedName("title")
     public String title;
 
     @ColumnInfo(name = "date")
+    @SerializedName("date")
     public long date;
 
     @ColumnInfo(name = "priority")
+    @SerializedName("priority")
     public int priority;
 
     @ColumnInfo(name = "tag")
+    @SerializedName("tag")
     public String tag;
 
     @ColumnInfo(name = "subtitle")
+    @SerializedName("subtitle")
     public String subtitle;
 
     @ColumnInfo(name = "time")
+    @SerializedName("time")
     public String time;
 
     @ColumnInfo(name = "is_completed")
+    @SerializedName("is_completed")
     public boolean isCompleted;
 
     // --- LMS Fields ---
     @ColumnInfo(name = "course_id")
+    @SerializedName("course_id")
     public String courseId;
 
     @ColumnInfo(name = "attachment_url")
+    @SerializedName("attachment_url")
     public String attachmentUrl;
 
-    // --- MỚI: THỜI LƯỢNG (Duration) ---
-    // Lưu thời gian dự kiến hoàn thành Task (tính bằng mili giây)
     @ColumnInfo(name = "duration")
+    @SerializedName("duration")
     public long duration;
 
     // --- Sync Fields ---
     @ColumnInfo(name = "owner_id")
+    @SerializedName("owner_id")
     public String ownerId;
 
+    // Sử dụng transient: Room sẽ tạo cột trong DB, nhưng Gson sẽ BỎ QUA khi gửi lên Supabase
     @ColumnInfo(name = "is_synced")
-    public boolean isSynced;
+    public transient boolean isSynced;
 
     @ColumnInfo(name = "is_deleted")
-    public boolean isDeleted;
+    public transient boolean isDeleted;
 
     @ColumnInfo(name = "last_updated")
+    @SerializedName("last_updated")
     public long lastUpdated;
 
     public Task() {
@@ -69,7 +83,7 @@ public class Task {
         this.lastUpdated = System.currentTimeMillis();
         this.courseId = null;
         this.attachmentUrl = null;
-        this.duration = 30 * 60 * 1000; // Mặc định 30 phút nếu không nhập
+        this.duration = 30 * 60 * 1000;
     }
 
     @Ignore
@@ -89,7 +103,7 @@ public class Task {
 
         this.courseId = null;
         this.attachmentUrl = null;
-        this.duration = 25 * 60 * 1000; // Mặc định 25 phút
+        this.duration = 25 * 60 * 1000;
     }
 
     // --- Getter và Setter ---
@@ -124,7 +138,6 @@ public class Task {
     public String getAttachmentUrl() { return attachmentUrl; }
     public void setAttachmentUrl(String attachmentUrl) { this.attachmentUrl = attachmentUrl; }
 
-    // Getter/Setter cho Duration
     public long getDuration() { return duration; }
     public void setDuration(long duration) { this.duration = duration; }
 

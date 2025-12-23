@@ -142,6 +142,7 @@ public interface SupabaseService {
     Call<ResponseBody> uploadFile(
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
+            @Header("x-upsert") String upsert,
             @Path("bucket") String bucket,
             @Path("path") String path,
             @Part MultipartBody.Part file
