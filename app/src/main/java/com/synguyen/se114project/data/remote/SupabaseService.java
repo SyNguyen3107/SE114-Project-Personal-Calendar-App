@@ -66,8 +66,6 @@ public interface SupabaseService {
             @Header("Authorization") String token,
             @Query("course_id") String courseId
     );
-
-    // --- ĐÃ SỬA: CREATE COURSE (Thêm Annotation và đổi JsonObject -> Course) ---
     @POST("rest/v1/courses")
     @Headers({"Prefer: return=representation", "Content-Type: application/json"})
     Call<List<Course>> createCourse(

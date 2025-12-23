@@ -1,6 +1,10 @@
 package com.synguyen.se114project.ui.student.taskdetail;
 
 import android.app.AlertDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,14 +14,9 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.net.Uri;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -26,23 +25,24 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.synguyen.se114project.BuildConfig;
 import com.synguyen.se114project.R;
 import com.synguyen.se114project.data.entity.Subtask;
 import com.synguyen.se114project.data.entity.Task;
-import com.synguyen.se114project.ui.adapter.SubtaskAdapter;
-import com.synguyen.se114project.viewmodel.student.TaskDetailViewModel;
-import com.synguyen.se114project.viewmodel.student.TimerViewModel;
-import com.synguyen.se114project.BuildConfig;
 import com.synguyen.se114project.data.remote.RetrofitClient;
 import com.synguyen.se114project.data.remote.SupabaseService;
+import com.synguyen.se114project.ui.adapter.SubtaskAdapter;
 import com.synguyen.se114project.utils.FileUtils;
+import com.synguyen.se114project.viewmodel.student.TaskDetailViewModel;
+import com.synguyen.se114project.viewmodel.student.TimerViewModel;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.io.File;
+
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
@@ -50,8 +50,6 @@ import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-
-
 
 public class TaskDetailFragment extends Fragment {
 
@@ -70,13 +68,28 @@ public class TaskDetailFragment extends Fragment {
     private ImageView btnBack;
     private View btnMoreOptions;
     private Button btnStart, btnTakeBreak;
-    // UI Upload
+
+    // UI Upload (Sử dụng layoutUpload có sẵn trong XML)
     private View btnUploadLayout;
     private TextView tvUploadStatus;
     private ProgressBar pbUpload;
 
-    // Launcher chọn file
-    private ActivityResultLauncher<Intent> filePickerLauncher;
+    // Biến lưu file đã chọn
+    private Uri selectedFileUri;
+
+    // Launcher chọn file PDF
+    private final ActivityResultLauncher<String> pickFileLauncher = registerForActivityResult(
+            new ActivityResultContracts.GetContent(),
+            uri -> {
+                if (uri != null) {
+                    selectedFileUri = uri;
+                    String fileName = FileUtils.getFileName(requireContext(), uri);
+
+                    // Sau khi chọn file, hiện Dialog xác nhận nộp ngay
+                    showConfirmUploadDialog(fileName);
+                }
+            }
+    );
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -84,18 +97,6 @@ public class TaskDetailFragment extends Fragment {
         if (getArguments() != null) {
             taskId = getArguments().getString("taskId");
         }
-        // ĐĂNG KÝ LAUNCHER NHẬN FILE
-                filePickerLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-                        Uri selectedUri = result.getData().getData();
-                        if (selectedUri != null) {
-                            uploadAssignment(selectedUri);
-                        }
-                    }
-                }
-        );
     }
 
     @Nullable
@@ -128,7 +129,7 @@ public class TaskDetailFragment extends Fragment {
         btnBack = view.findViewById(R.id.btnBack);
         btnMoreOptions = view.findViewById(R.id.btnEditSubtask);
 
-        // Upload View
+        // Upload Views (Mapping đúng với ID trong XML)
         btnUploadLayout = view.findViewById(R.id.layoutUpload);
         tvUploadStatus = view.findViewById(R.id.tvUploadStatus);
         pbUpload = view.findViewById(R.id.pbUpload);
@@ -151,6 +152,8 @@ public class TaskDetailFragment extends Fragment {
         if (btnMoreOptions != null) {
             btnMoreOptions.setOnClickListener(v -> showEditSubtasksDialog());
         }
+
+        // Sự kiện Upload: Bấm vào layout -> Mở trình chọn file
         if (btnUploadLayout != null) {
             btnUploadLayout.setOnClickListener(v -> openFilePicker());
         }
@@ -159,7 +162,93 @@ public class TaskDetailFragment extends Fragment {
         setupTimerLogic();
     }
 
-    // Helper: Lấy thời lượng của Task (mặc định 25p nếu chưa set)
+    // --- CÁC HÀM XỬ LÝ UPLOAD FILE ---
+
+    private void openFilePicker() {
+        // Chỉ chọn file PDF (hoặc thay đổi MIME type nếu cần)
+        pickFileLauncher.launch("application/pdf");
+    }
+
+    private void showConfirmUploadDialog(String fileName) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Xác nhận nộp bài")
+                .setMessage("Bạn có muốn nộp file này không?\n\n" + fileName)
+                .setPositiveButton("Nộp ngay", (dialog, which) -> {
+                    uploadSubmission();
+                })
+                .setNegativeButton("Hủy", (dialog, which) -> {
+                    selectedFileUri = null; // Reset chọn file
+                })
+                .show();
+    }
+
+    private void uploadSubmission() {
+        if (selectedFileUri == null || currentTask == null) return;
+
+        // UI Loading
+        pbUpload.setVisibility(View.VISIBLE);
+        tvUploadStatus.setText("Đang tải lên...");
+        btnUploadLayout.setEnabled(false); // Khóa nút bấm
+
+        try {
+            // 1. Chuyển Uri thành File thật
+            File file = FileUtils.getFileFromUri(requireContext(), selectedFileUri);
+
+            // 2. Tạo RequestBody (PDF)
+            RequestBody requestFile = RequestBody.create(MediaType.parse("application/pdf"), file);
+            MultipartBody.Part body = MultipartBody.Part.createFormData("file", file.getName(), requestFile);
+
+            // 3. Lấy thông tin User & Token
+            SharedPreferences prefs = requireActivity().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
+            String token = prefs.getString("ACCESS_TOKEN", "");
+            String userId = prefs.getString("USER_ID", "");
+
+            // 4. Tạo tên file unique: assign_{taskId}_{userId}_{timestamp}.pdf
+            String serverFileName = "assign_" + currentTask.getId() + "_" + userId + "_" + System.currentTimeMillis() + ".pdf";
+
+            // 5. Gọi API
+            SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
+            service.uploadFile(BuildConfig.SUPABASE_KEY, "Bearer " + token, "assignments", serverFileName, body)
+                    .enqueue(new Callback<ResponseBody>() { // Dùng ResponseBody
+                        @Override
+                        public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                            // Reset UI state
+                            pbUpload.setVisibility(View.GONE);
+                            btnUploadLayout.setEnabled(true);
+
+                            if (response.isSuccessful()) {
+                                Toast.makeText(getContext(), "Nộp bài thành công!", Toast.LENGTH_SHORT).show();
+                                tvUploadStatus.setText("Đã nộp: " + file.getName());
+                                tvUploadStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+
+                                // Clear uri để tránh nộp lại file cũ
+                                selectedFileUri = null;
+                            } else {
+                                Toast.makeText(getContext(), "Lỗi upload: " + response.code(), Toast.LENGTH_SHORT).show();
+                                tvUploadStatus.setText("Lỗi tải lên. Nhấn để thử lại.");
+                                tvUploadStatus.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<ResponseBody> call, Throwable t) {
+                            pbUpload.setVisibility(View.GONE);
+                            btnUploadLayout.setEnabled(true);
+                            Toast.makeText(getContext(), "Lỗi mạng: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                            tvUploadStatus.setText("Lỗi mạng. Nhấn để thử lại.");
+                        }
+                    });
+
+        } catch (Exception e) {
+            pbUpload.setVisibility(View.GONE);
+            btnUploadLayout.setEnabled(true);
+            e.printStackTrace();
+            Toast.makeText(getContext(), "Lỗi file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // --- CÁC HÀM LOGIC CŨ (GIỮ NGUYÊN) ---
+
     private long getTaskDuration() {
         if (currentTask != null && currentTask.getDuration() > 0) {
             return currentTask.getDuration();
@@ -168,61 +257,44 @@ public class TaskDetailFragment extends Fragment {
     }
 
     private void setupTimerLogic() {
-        // Cấu hình Progress Bar Timer DỰA THEO DURATION CỦA TASK
         if (currentTask != null && currentTask.getDuration() > 0) {
             pbTimer.setMax((int) (currentTask.getDuration() / 1000));
         } else {
-            pbTimer.setMax(25 * 60); // Fallback 25p
+            pbTimer.setMax(25 * 60);
         }
 
-        // --- OBSERVERS ---
-        // Quan sát Active Task để biết Timer nào đang chạy
-        timerViewModel.getTasksTimeRemaining().observe(getViewLifecycleOwner(), map -> {
-            checkAndUpdateTimerUI(); // Cập nhật UI dựa trên ID của task hiện tại
-        });
+        timerViewModel.getTasksTimeRemaining().observe(getViewLifecycleOwner(), map -> checkAndUpdateTimerUI());
+        timerViewModel.getRunningTasks().observe(getViewLifecycleOwner(), list -> checkAndUpdateTimerUI());
 
-        // Quan sát List running tasks để biết trạng thái start/stop
-        timerViewModel.getRunningTasks().observe(getViewLifecycleOwner(), list -> {
-            checkAndUpdateTimerUI();
-        });
-
-        // --- BUTTONS ---
-        // Nút START / STOP
         btnStart.setOnClickListener(v -> {
             if (currentTask == null) return;
             boolean isRunning = timerViewModel.isTaskRunning(currentTask.getId());
             boolean isPaused = timerViewModel.isTaskRunningOrPaused(currentTask.getId()) && !isRunning;
 
             if (isRunning || isPaused) {
-                timerViewModel.stopTimer(currentTask.getId()); // Stop timer cụ thể
+                timerViewModel.stopTimer(currentTask.getId());
                 Toast.makeText(getContext(), "Timer stopped", Toast.LENGTH_SHORT).show();
             } else {
-                timerViewModel.startTimer(currentTask); // Start timer cụ thể
+                timerViewModel.startTimer(currentTask);
             }
         });
 
-        // Nút TAKE BREAK / RESUME
         btnTakeBreak.setOnClickListener(v -> {
             if (currentTask == null) return;
             boolean isRunning = timerViewModel.isTaskRunning(currentTask.getId());
             if (isRunning) {
-                timerViewModel.pauseTimer(currentTask.getId()); // Pause timer cụ thể
+                timerViewModel.pauseTimer(currentTask.getId());
             } else {
-                // Resume logic: Gọi startTimer sẽ tự resume nếu còn thời gian
                 timerViewModel.startTimer(currentTask);
             }
         });
     }
 
-    // Logic cốt lõi: Kiểm tra xem Timer toàn cục có khớp với Task hiện tại không
     private void checkAndUpdateTimerUI() {
         if (currentTask == null) return;
 
-        // Kiểm tra xem task hiện tại có trong danh sách running/paused không
         boolean isRunning = timerViewModel.isTaskRunning(currentTask.getId());
         boolean isPaused = timerViewModel.isTaskRunningOrPaused(currentTask.getId()) && !isRunning;
-
-        // Lấy thời gian còn lại từ Map
         long millis = timerViewModel.getTimeRemaining(currentTask.getId());
 
         if (millis > 0) {
@@ -230,7 +302,6 @@ public class TaskDetailFragment extends Fragment {
         } else {
             updateTimerUI(getTaskDuration());
         }
-
         updateButtonsState(isRunning, isPaused);
     }
 
@@ -238,53 +309,29 @@ public class TaskDetailFragment extends Fragment {
         long minutes = (millisLeft / 1000) / 60;
         long seconds = (millisLeft / 1000) % 60;
         tvTimerDisplay.setText(String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds));
-
-        int secondsLeft = (int) (millisLeft / 1000);
-        pbTimer.setProgress(secondsLeft);
+        pbTimer.setProgress((int) (millisLeft / 1000));
     }
 
     private void updateButtonsState(boolean isRunning, boolean isPaused) {
         if (isRunning) {
-            // --- TRẠNG THÁI: ĐANG CHẠY ---
-            // Nút trái: Stop (Đỏ)
             btnStart.setText("Stop");
             btnStart.setBackgroundColor(getResources().getColor(android.R.color.holo_red_light));
-
-            // Nút phải: Take Break (Trắng/Xanh - Enable) -> Để bấm Pause
             btnTakeBreak.setText("Take Break");
             btnTakeBreak.setEnabled(true);
             btnTakeBreak.setAlpha(1.0f);
-
         } else if (isPaused) {
-            // --- TRẠNG THÁI: TẠM DỪNG (PAUSED) ---
-            // Nút trái: Stop (Vẫn cho phép dừng hẳn nếu muốn)
             btnStart.setText("Stop");
             btnStart.setBackgroundColor(getResources().getColor(android.R.color.holo_red_light));
-
-            // Nút phải: Resume (Enable) -> Để bấm Chạy tiếp
             btnTakeBreak.setText("Resume");
             btnTakeBreak.setEnabled(true);
             btnTakeBreak.setAlpha(1.0f);
-
         } else {
-            // --- TRẠNG THÁI: CHƯA CHẠY / ĐÃ XONG (IDLE) ---
-            // Nút trái: Start (Xanh)
             btnStart.setText("Start");
-            btnStart.setBackgroundColor(0xFF304FFE); // Xanh #304FFE
-
-            // Nút phải: Take Break (Disable) -> Chưa chạy thì ko break được
+            btnStart.setBackgroundColor(0xFF304FFE);
             btnTakeBreak.setText("Take Break");
             btnTakeBreak.setEnabled(false);
             btnTakeBreak.setAlpha(0.5f);
         }
-    }
-
-    private void resetButtonsToIdle() {
-        btnStart.setText("Start");
-        btnStart.setBackgroundColor(0xFF304FFE); // Xanh
-        btnTakeBreak.setText("Take Break");
-        btnTakeBreak.setEnabled(false);
-        btnTakeBreak.setAlpha(0.5f);
     }
 
     private void setupRecyclerView() {
@@ -296,9 +343,7 @@ public class TaskDetailFragment extends Fragment {
                 mViewModel.updateSubtaskStatus(subtask, isChecked);
             }
             @Override
-            public void onDelete(Subtask subtask) {
-                // Không xóa ở đây
-            }
+            public void onDelete(Subtask subtask) {}
         });
         rvSubtasks.setAdapter(adapter);
     }
@@ -315,11 +360,10 @@ public class TaskDetailFragment extends Fragment {
                     tvDeadline.setText("Due: " + sdf.format(new Date(task.getDate())));
                 }
 
-                // Cập nhật Max cho Progress Bar
+                // Update Max Timer
                 long duration = getTaskDuration();
                 pbTimer.setMax((int) (duration / 1000));
 
-                // Khi mới load, kiểm tra ngay trạng thái Timer
                 checkAndUpdateTimerUI();
             }
         });
@@ -400,71 +444,6 @@ public class TaskDetailFragment extends Fragment {
         });
 
         btnClose.setOnClickListener(v -> dialog.dismiss());
-
         dialog.show();
-    }
-    private void openFilePicker() {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("application/pdf");
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        filePickerLauncher.launch(Intent.createChooser(intent, "Select Assignment PDF"));
-    }
-
-    // Hàm Upload lên Supabase
-    private void uploadAssignment(Uri fileUri) {
-        if (currentTask == null) return;
-
-        pbUpload.setVisibility(View.VISIBLE);
-        tvUploadStatus.setText("Uploading...");
-        btnUploadLayout.setEnabled(false);
-
-        try {
-            Context context = requireContext();
-            File file = FileUtils.getFileFromUri(context, fileUri);
-
-            // Quy tắc đặt tên file: assign_{taskId}_{userId}.pdf
-            SharedPreferences prefs = context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
-            String userId = prefs.getString("USER_ID", "unknown_user"); // Đảm bảo bạn đã lưu USER_ID khi login
-            String token = prefs.getString("ACCESS_TOKEN", "");
-
-            String fileNameOnServer = "assign_" + currentTask.getId() + "_" + userId + ".pdf";
-
-            // Tạo RequestBody
-            RequestBody requestFile = RequestBody.create(MediaType.parse("application/pdf"), file);
-            MultipartBody.Part body = MultipartBody.Part.createFormData("file", fileNameOnServer, requestFile);
-
-            // Gọi API
-            SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
-            service.uploadFile(BuildConfig.SUPABASE_KEY, "Bearer " + token, "assignments", fileNameOnServer, body)
-                    .enqueue(new Callback<ResponseBody>() {
-                        @Override
-                        public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                            pbUpload.setVisibility(View.GONE);
-                            btnUploadLayout.setEnabled(true);
-
-                            if (response.isSuccessful()) {
-                                Toast.makeText(context, "Nộp bài thành công!", Toast.LENGTH_SHORT).show();
-                                tvUploadStatus.setText("Đã nộp: " + file.getName());
-                                tvUploadStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
-                            } else {
-                                Toast.makeText(context, "Lỗi nộp bài: " + response.code(), Toast.LENGTH_SHORT).show();
-                                tvUploadStatus.setText("Lỗi upload. Thử lại.");
-                            }
-                        }
-
-                        @Override
-                        public void onFailure(Call<ResponseBody> call, Throwable t) {
-                            pbUpload.setVisibility(View.GONE);
-                            btnUploadLayout.setEnabled(true);
-                            Toast.makeText(context, "Lỗi mạng", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-
-        } catch (Exception e) {
-            pbUpload.setVisibility(View.GONE);
-            btnUploadLayout.setEnabled(true);
-            e.printStackTrace();
-            Toast.makeText(getContext(), "Lỗi file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
     }
 }
