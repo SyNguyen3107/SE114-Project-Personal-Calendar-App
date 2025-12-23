@@ -1,5 +1,6 @@
 package com.synguyen.se114project.ui.student.profile;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -22,11 +24,13 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.synguyen.se114project.R;
 import com.synguyen.se114project.data.entity.Profile; // Import Entity Profile
 import com.synguyen.se114project.data.repository.ProfileRepository;
+import com.synguyen.se114project.ui.login.LoginActivity;
 
 public class ProfileFragment extends Fragment {
 
     private TextInputEditText etName, etEmail;
     private ImageView imgAvatar, btnChangeAvatar;
+    private TextView btnLogout;
     private Button btnSaveProfile;
 
     private Uri selectedImageUri = null;
@@ -74,6 +78,7 @@ public class ProfileFragment extends Fragment {
         imgAvatar = view.findViewById(R.id.imgAvatar);
         btnChangeAvatar = view.findViewById(R.id.btnChangeAvatar);
         btnSaveProfile = view.findViewById(R.id.btnSaveProfile);
+        btnLogout = view.findViewById(R.id.btnLogout);
 
         profileRepository = new ProfileRepository();
 
@@ -91,6 +96,34 @@ public class ProfileFragment extends Fragment {
             saveAvatarLocal();
             updateNameToSupabase();
         });
+
+        // 5) Logout
+        if (btnLogout != null) {
+            btnLogout.setOnClickListener(v -> showLogoutConfirmationDialog());
+        }
+    }
+
+    private void showLogoutConfirmationDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Log out")
+                .setMessage("Do you really want to log out?")
+                .setPositiveButton("Yes", (dialog, which) -> handleLogout())
+                .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
+    private void handleLogout() {
+        // Xóa Token và thông tin User
+        SharedPreferences authPref = requireActivity().getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE);
+        authPref.edit().clear().apply();
+
+        // Điều hướng về LoginActivity
+        Intent intent = new Intent(requireActivity(), LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        requireActivity().finish();
+        
+        Toast.makeText(getContext(), "Logged out successfully", Toast.LENGTH_SHORT).show();
     }
 
     // ===================== SUPABASE =====================

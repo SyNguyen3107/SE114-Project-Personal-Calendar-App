@@ -25,12 +25,14 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.gson.JsonObject;
 import com.synguyen.se114project.BuildConfig;
 import com.synguyen.se114project.R;
 import com.synguyen.se114project.data.entity.Subtask;
 import com.synguyen.se114project.data.entity.Task;
 import com.synguyen.se114project.data.remote.RetrofitClient;
 import com.synguyen.se114project.data.remote.SupabaseService;
+import com.synguyen.se114project.data.remote.response.FileObject;
 import com.synguyen.se114project.ui.adapter.SubtaskAdapter;
 import com.synguyen.se114project.utils.FileUtils;
 import com.synguyen.se114project.viewmodel.student.TaskDetailViewModel;
@@ -144,6 +146,7 @@ public class TaskDetailFragment extends Fragment {
         // 4. Load Data
         if (taskId != null) {
             loadTaskData();
+            checkExistingSubmission();
         }
 
         // 5. Events
@@ -182,6 +185,34 @@ public class TaskDetailFragment extends Fragment {
                 .show();
     }
 
+    private void checkExistingSubmission() {
+        if (taskId == null) return;
+
+        SharedPreferences prefs = requireActivity().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
+        String token = prefs.getString("ACCESS_TOKEN", "");
+        String userId = prefs.getString("USER_ID", "");
+
+        JsonObject body = new JsonObject();
+        body.addProperty("prefix", "assign_" + taskId + "_" + userId);
+
+        SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
+        service.listFiles(BuildConfig.SUPABASE_KEY, "Bearer " + token, "assignments", body)
+                .enqueue(new Callback<List<FileObject>>() {
+                    @Override
+                    public void onResponse(Call<List<FileObject>> call, Response<List<FileObject>> response) {
+                        if (isAdded() && response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                            FileObject existingFile = response.body().get(0);
+                            tvUploadStatus.setText("Đã nộp: " + existingFile.name);
+                            tvUploadStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<List<FileObject>> call, Throwable t) {
+                    }
+                });
+    }
+
     private void uploadSubmission() {
         if (selectedFileUri == null || currentTask == null) return;
 
@@ -203,13 +234,13 @@ public class TaskDetailFragment extends Fragment {
             String token = prefs.getString("ACCESS_TOKEN", "");
             String userId = prefs.getString("USER_ID", "");
 
-            // 4. Tạo tên file unique: assign_{taskId}_{userId}_{timestamp}.pdf
-            String serverFileName = "assign_" + currentTask.getId() + "_" + userId + "_" + System.currentTimeMillis() + ".pdf";
+            // 4. Tạo tên file unique theo userId để hỗ trợ ghi đè
+            String serverFileName = "assign_" + currentTask.getId() + "_" + userId + ".pdf";
 
-            // 5. Gọi API
+            // 5. Gọi API với x-upsert: true
             SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
-            service.uploadFile(BuildConfig.SUPABASE_KEY, "Bearer " + token, "assignments", serverFileName, body)
-                    .enqueue(new Callback<ResponseBody>() { // Dùng ResponseBody
+            service.uploadFile(BuildConfig.SUPABASE_KEY, "Bearer " + token, "true", "assignments", serverFileName, body)
+                    .enqueue(new Callback<ResponseBody>() {
                         @Override
                         public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                             // Reset UI state
