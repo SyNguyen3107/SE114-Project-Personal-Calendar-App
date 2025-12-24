@@ -1,4 +1,4 @@
-package com.synguyen.se114project.ui.teacher;
+package com.synguyen.se114project.ui.teacher.materials;
 
 import android.app.Activity;
 import android.content.Context;
@@ -17,8 +17,6 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.synguyen.se114project.BuildConfig;

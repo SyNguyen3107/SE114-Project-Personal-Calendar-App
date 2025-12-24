@@ -43,7 +43,10 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
     public TaskAdapter() {
         super(DIFF_CALLBACK);
     }
-
+    public TaskAdapter(OnItemClickListener listener) {
+        super(DIFF_CALLBACK);
+        this.listener = listener;
+    }
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
     }

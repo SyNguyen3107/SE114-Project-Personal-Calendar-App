@@ -23,7 +23,8 @@ public class SubtaskAdapter extends ListAdapter<Subtask, SubtaskAdapter.SubtaskV
     // Interface mở rộng để hỗ trợ cả Check và Delete (nếu sau này cần)
     public interface OnSubtaskActionListener {
         void onCheck(Subtask subtask, boolean isChecked);
-        void onDelete(Subtask subtask); // Để dành cho nút xóa
+        void onDelete(Subtask subtask);
+        void onEdit(Subtask subtask);
     }
 
     public SubtaskAdapter() {
@@ -99,7 +100,11 @@ public class SubtaskAdapter extends ListAdapter<Subtask, SubtaskAdapter.SubtaskV
                     listener.onCheck(subtask, isChecked);
                 }
             });
-
+            tvTitle.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onEdit(subtask); // Gọi phương thức vừa thêm
+                }
+            });
             // Logic nút xóa (Nếu có)
             /*
             if (btnDelete != null) {

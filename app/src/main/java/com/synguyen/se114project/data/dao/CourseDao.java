@@ -15,11 +15,11 @@ import java.util.List;
 public interface CourseDao {
 
     // Lấy tất cả lớp học (chưa bị xóa)
-    @Query("SELECT * FROM Course_table WHERE is_deleted = 0 ORDER BY name ASC")
+    @Query("SELECT * FROM courses WHERE is_deleted = 0 ORDER BY name ASC")
     LiveData<List<Course>> getAllCourses();
 
     // Lấy chi tiết lớp học theo ID
-    @Query("SELECT * FROM Course_table WHERE id = :id LIMIT 1")
+    @Query("SELECT * FROM courses WHERE id = :id LIMIT 1")
     LiveData<Course> getCourseById(String id);
 
     // Thêm hoặc thay thế
@@ -34,10 +34,10 @@ public interface CourseDao {
     void updateCourse(Course Course);
 
     // Xóa mềm
-    @Query("UPDATE Course_table SET is_deleted = 1, is_synced = 0, last_updated = :currentTime WHERE id = :id")
+    @Query("UPDATE courses SET is_deleted = 1, is_synced = 0, last_updated = :currentTime WHERE id = :id")
     void softDeleteCourse(String id, long currentTime);
 
     // Sync: Lấy các lớp chưa đồng bộ
-    @Query("SELECT * FROM Course_table WHERE is_synced = 0")
+    @Query("SELECT * FROM courses WHERE is_synced = 0")
     List<Course> getUnsyncedCourses();
 }

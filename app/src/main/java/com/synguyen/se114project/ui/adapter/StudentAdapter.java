@@ -9,20 +9,18 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.synguyen.se114project.R;
-import com.synguyen.se114project.data.entity.Profile; // Import đúng Entity Profile
+import com.synguyen.se114project.data.entity.Profile;
 
 import java.util.List;
 
 public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentViewHolder> {
 
-    // 1. Thay đổi từ List<JsonObject> sang List<Profile>
     private List<Profile> studentList;
 
     public StudentAdapter(List<Profile> studentList) {
         this.studentList = studentList;
     }
 
-    // 2. Cập nhật hàm updateData nhận List<Profile>
     public void updateData(List<Profile> newList) {
         this.studentList = newList;
         notifyDataSetChanged();
@@ -38,19 +36,30 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentV
     @Override
     public void onBindViewHolder(@NonNull StudentViewHolder holder, int position) {
         Profile student = studentList.get(position);
+        if (student == null) return;
 
-        // 3. Sử dụng Getter của đối tượng Profile thay vì parse JSON
-        // Lưu ý: Đảm bảo class Profile của bạn đã có các hàm getter này (hoặc truy cập field public)
+        // 1. Tên
         String name = student.getFullName();
-        String email = student.getEmail();
+        holder.tvName.setText((name != null && !name.isEmpty()) ? name : "Chưa cập nhật tên");
 
-        // Fallback nếu null
-        if (name == null || name.isEmpty()) {
-            name = "Sinh viên";
+        // 2. Email
+        holder.tvEmail.setText(student.getEmail() != null ? student.getEmail() : "");
+
+        // 3. User Code (MSSV) - MỚI
+        if (student.getUserCode() != null && !student.getUserCode().isEmpty()) {
+            holder.tvCode.setText("MSSV: " + student.getUserCode());
+            holder.tvCode.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvCode.setVisibility(View.GONE);
         }
 
-        holder.tvName.setText(name);
-        holder.tvEmail.setText(email != null ? email : "");
+        // 4. Avatar chữ cái đầu (Cho đẹp đội hình) - MỚI
+        if (name != null && !name.isEmpty()) {
+            String firstChar = String.valueOf(name.charAt(0)).toUpperCase();
+            holder.tvAvatar.setText(firstChar);
+        } else {
+            holder.tvAvatar.setText("?");
+        }
     }
 
     @Override
@@ -59,12 +68,15 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentV
     }
 
     static class StudentViewHolder extends RecyclerView.ViewHolder {
-        TextView tvName, tvEmail;
+        TextView tvName, tvEmail, tvCode, tvAvatar; // Thêm tvCode, tvAvatar
 
         public StudentViewHolder(@NonNull View itemView) {
             super(itemView);
+            // Ánh xạ đúng ID trong XML item_student.xml
             tvName = itemView.findViewById(R.id.tvStudentName);
             tvEmail = itemView.findViewById(R.id.tvStudentEmail);
+            tvCode = itemView.findViewById(R.id.tvStudentCode); // Mới
+            tvAvatar = itemView.findViewById(R.id.tvAvatarChar); // Mới
         }
     }
 }

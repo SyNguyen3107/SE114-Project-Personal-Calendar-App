@@ -35,4 +35,7 @@ public class CourseDetailViewModel extends AndroidViewModel {
     public LiveData<List<Task>> getTasksByClassId(String classId) {
         return taskRepository.getTasksByCourseId(classId);
     }
+    public void loadMaterials(String token, String courseId, retrofit2.Callback<List<com.synguyen.se114project.data.remote.response.FileObject>> callback) {
+        courseRepository.fetchMaterials(token, courseId, callback);
+    }
 }

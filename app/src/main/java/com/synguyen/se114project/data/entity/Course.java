@@ -6,54 +6,73 @@ import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
+import com.google.gson.annotations.SerializedName; // 1. Thêm Import này
+
+import java.io.Serializable; // Nên implement Serializable để truyền qua Intent
 import java.util.UUID;
 
-// Đổi tên bảng thành "course_table" cho đồng bộ
-@Entity(tableName = "course_table")
-public class Course {
+@Entity(tableName = "courses")
+public class Course implements Serializable {
+
     @PrimaryKey
     @NonNull
     @ColumnInfo(name = "id")
+    @SerializedName("id") // Map với cột "id" trên Supabase
     public String id;
 
     @ColumnInfo(name = "name")
-    public String name; // Tên môn
+    @SerializedName("name") // Map với cột "name"
+    public String name;
 
     @ColumnInfo(name = "description")
-    public String description; // Mô tả ngắn
+    @SerializedName("description") // Map với cột "description"
+    public String description;
 
     @ColumnInfo(name = "teacher_name")
-    public String teacherName; // Tên giáo viên
+    @SerializedName("teacher_name") // QUAN TRỌNG: Java là teacherName -> JSON là teacher_name
+    public String teacherName;
 
     @ColumnInfo(name = "time_slot")
-    public String timeSlot; // Giờ học
+    @SerializedName("time_slot")
+    public String timeSlot;
 
     @ColumnInfo(name = "date_info")
+    @SerializedName("date_info")
     public String dateInfo;
 
     @ColumnInfo(name = "color_hex")
-    public String colorHex; // Mã màu nền (VD: #2196F3)
+    @SerializedName("color_hex")
+    public String colorHex;
+    @SerializedName("student_count") // Tên cột trong View SQL
+    private int studentCount;
 
     // --- SYNC FIELDS ---
-    @ColumnInfo(name = "owner_id")
-    public String ownerId;
 
-    @ColumnInfo(name = "is_synced")
-    public boolean isSynced;
+    @ColumnInfo(name = "teacher_id") // Tên cột trong Local DB (Room)
+    @SerializedName("teacher_id")    // Tên cột trên Server (Supabase) - QUAN TRỌNG
+    public String teacherId;         // Tên biến trong Java
 
     @ColumnInfo(name = "is_deleted")
+    @SerializedName("is_deleted") // <--- THÊM DÒNG NÀY
     public boolean isDeleted;
 
+    // 2. SỬA LUÔN lastUpdated (Nếu không sẽ bị lỗi tương tự sau này)
     @ColumnInfo(name = "last_updated")
+    @SerializedName("last_updated") // <--- THÊM DÒNG NÀY
     public long lastUpdated;
 
-    // Constructor mặc định
+    // 3. Xử lý isSynced (Trường này chỉ dùng ở Local, không nên gửi lên Server)
+    @ColumnInfo(name = "is_synced")
+    // Không thêm SerializedName, nhưng nên dùng transient để GSON bỏ qua nó khi gửi API
+    public transient boolean isSynced;
+
+    // --- CONSTRUCTOR ---
     public Course() {
         this.id = UUID.randomUUID().toString();
         this.isSynced = false;
         this.isDeleted = false;
         this.lastUpdated = System.currentTimeMillis();
-        this.colorHex = "#2196F3"; // Mặc định màu xanh Blue
+        this.colorHex = "#2196F3";
     }
 
     @Ignore
@@ -71,7 +90,7 @@ public class Course {
         this.lastUpdated = System.currentTimeMillis();
     }
 
-    // Getter & Setter
+    // --- GETTER & SETTER (Giữ nguyên) ---
     @NonNull
     public String getId() { return id; }
     public void setId(@NonNull String id) { this.id = id; }
@@ -94,8 +113,10 @@ public class Course {
     public String getColorHex() { return colorHex; }
     public void setColorHex(String colorHex) { this.colorHex = colorHex; }
 
-    public String getOwnerId() { return ownerId; }
-    public void setOwnerId(String ownerId) { this.ownerId = ownerId; }
+    public String getTeacherId() { return teacherId; }
+    public void setTeacherId(String teacherId) {
+        this.teacherId = teacherId;
+    }
 
     public boolean isSynced() { return isSynced; }
     public void setSynced(boolean synced) { isSynced = synced; }
@@ -105,4 +126,10 @@ public class Course {
 
     public long getLastUpdated() { return lastUpdated; }
     public void setLastUpdated(long lastUpdated) { this.lastUpdated = lastUpdated; }
+    public int getStudentCount() {
+        return studentCount;
+    }
+    public void setStudentCount(int studentCount) {
+        this.studentCount = studentCount;
+    }
 }

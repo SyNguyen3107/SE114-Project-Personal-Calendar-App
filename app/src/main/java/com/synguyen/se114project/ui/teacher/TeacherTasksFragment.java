@@ -1,11 +1,11 @@
 package com.synguyen.se114project.ui.teacher;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.content.Intent;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -18,13 +18,13 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.gson.JsonObject;
 import com.synguyen.se114project.BuildConfig;
 import com.synguyen.se114project.R;
 import com.synguyen.se114project.data.entity.Task;
 import com.synguyen.se114project.data.remote.RetrofitClient;
 import com.synguyen.se114project.data.remote.SupabaseService;
 import com.synguyen.se114project.ui.adapter.TeacherTaskAdapter;
+import com.synguyen.se114project.ui.teacher.taskdetail.TeacherTaskDetailFragment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,24 +47,23 @@ public class TeacherTasksFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_teacher_tasks, container, false);
 
-        // 1. Nhận CourseID từ Activity cha
         if (getArguments() != null) {
             courseId = getArguments().getString("COURSE_ID");
         }
 
-        // 2. Lấy Token
-        SharedPreferences prefs = getActivity().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
+        SharedPreferences prefs = requireActivity().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
         token = prefs.getString("ACCESS_TOKEN", null);
         userId = prefs.getString("USER_ID", null);
 
-        // 3. Setup UI
         rcvTasks = view.findViewById(R.id.rcvTasks);
         fabAdd = view.findViewById(R.id.fabAddTask);
 
         rcvTasks.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        // Khởi tạo Adapter
         adapter = new TeacherTaskAdapter(new ArrayList<>(), task -> {
-            // Sự kiện khi bấm vào 1 bài tập -> Mở màn hình chi tiết
-            Intent intent = new Intent(getContext(), TeacherTaskDetailActivity.class);
+            // Mở màn hình chi tiết (Đảm bảo bạn đã tạo Activity này)
+            Intent intent = new Intent(getContext(), TeacherTaskDetailFragment.class);
             intent.putExtra("TASK_ID", task.getId());
             intent.putExtra("TASK_TITLE", task.getTitle());
             intent.putExtra("TASK_DESC", task.getSubTitle());
@@ -73,36 +72,35 @@ public class TeacherTasksFragment extends Fragment {
         });
         rcvTasks.setAdapter(adapter);
 
-        // 4. Load dữ liệu & Sự kiện
         loadTasks();
+
         fabAdd.setOnClickListener(v -> showAddTaskDialog());
 
         return view;
     }
 
     private void loadTasks() {
-        SharedPreferences prefs = requireActivity().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
-        String token = prefs.getString("ACCESS_TOKEN", null);
-
         if (token == null || courseId == null) return;
 
         SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
-        service.getTasksByCourse(BuildConfig.SUPABASE_KEY, token, "eq." + courseId)
-                .enqueue(new Callback<List<Task>>() { // <--- Quan trọng: List<Task>
+
+        // SỬA: Thêm "Bearer " trước token và "eq." trước courseId
+        service.getTasksByCourse(BuildConfig.SUPABASE_KEY, "Bearer " + token, "eq." + courseId)
+                .enqueue(new Callback<List<Task>>() {
                     @Override
                     public void onResponse(Call<List<Task>> call, Response<List<Task>> response) {
                         if (response.isSuccessful() && response.body() != null) {
                             List<Task> tasks = response.body();
-
-                            android.util.Log.d("DEBUG_TASK", "Đã lấy được " + tasks.size() + " bài tập.");
+                            // QUAN TRỌNG: Phải gọi hàm này để danh sách hiện lên màn hình
+                            adapter.updateData(tasks);
                         } else {
-                            Toast.makeText(getContext(), "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "Lỗi tải dữ liệu: " + response.code(), Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     @Override
                     public void onFailure(Call<List<Task>> call, Throwable t) {
-                        android.util.Log.e("DEBUG_TASK", "Lỗi: " + t.getMessage());
+                        Toast.makeText(getContext(), "Lỗi kết nối", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -111,6 +109,7 @@ public class TeacherTasksFragment extends Fragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Giao Bài Tập Mới");
 
+        // Inflate layout dialog_add_task.xml vừa tạo ở trên
         View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_add_task, null);
         final EditText edtTitle = view.findViewById(R.id.edtTaskTitle);
         final EditText edtDeadline = view.findViewById(R.id.edtTaskDeadline);
@@ -135,29 +134,21 @@ public class TeacherTasksFragment extends Fragment {
     private void createTaskAPI(String title, String deadline, String desc) {
         SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
 
-        // 1. TẠO ĐỐI TƯỢNG TASK (Thay vì JsonObject)
-        // Class Task đã có sẵn constructor tạo ID và các field mặc định
         Task task = new Task();
         task.setTitle(title);
-        task.setTime(deadline); // Lưu deadline (dạng chuỗi giờ)
+        task.setTime(deadline);
         task.setSubTitle(desc);
-        task.setcourseId(courseId); // Lưu ý: Kiểm tra lại tên hàm setter trong Task.java (setCourseId hay setcourseId)
+        task.setcourseId(courseId); // Chú ý: Entity dùng setcourseId (chữ c thường)
         task.setOwnerId(userId);
-
-        // Gán các giá trị mặc định khác nếu cần
         task.setPriority(1);
-        task.setSynced(true); // Vì đang đẩy thẳng lên server nên set là true
 
-        // 2. GỌI API
-        // - Dùng BuildConfig.SUPABASE_KEY
-        // - Truyền biến 'task' vào body
-        // - Callback nhận về List<Task>
-        service.createTask(BuildConfig.SUPABASE_KEY, token, task).enqueue(new Callback<List<Task>>() {
+        // SỬA: Thêm "Bearer " trước token
+        service.createTask(BuildConfig.SUPABASE_KEY, "Bearer " + token, task).enqueue(new Callback<List<Task>>() {
             @Override
             public void onResponse(Call<List<Task>> call, Response<List<Task>> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(getContext(), "Đã giao bài tập!", Toast.LENGTH_SHORT).show();
-                    loadTasks();
+                    loadTasks(); // Load lại để thấy bài mới
                 } else {
                     Toast.makeText(getContext(), "Lỗi: " + response.code(), Toast.LENGTH_SHORT).show();
                 }

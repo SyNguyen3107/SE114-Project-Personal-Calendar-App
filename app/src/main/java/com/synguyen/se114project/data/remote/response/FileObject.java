@@ -23,6 +23,12 @@ public class FileObject {
         }
         return "0 KB";
     }
+
+    public String getCreatedAt() {
+        return createdAt;
+
+    }
+
     public static class MetaData {
         @SerializedName("size")
         public long size;

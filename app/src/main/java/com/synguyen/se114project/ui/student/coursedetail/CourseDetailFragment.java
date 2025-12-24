@@ -1,11 +1,16 @@
 package com.synguyen.se114project.ui.student.coursedetail;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,36 +23,51 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.gson.JsonObject;
+import com.synguyen.se114project.BuildConfig;
 import com.synguyen.se114project.R;
-import com.synguyen.se114project.data.entity.Course;
+import com.synguyen.se114project.data.remote.RetrofitClient;
+import com.synguyen.se114project.data.remote.SupabaseService;
+import com.synguyen.se114project.data.remote.response.FileObject;
+import com.synguyen.se114project.ui.adapter.MaterialAdapter;
 import com.synguyen.se114project.ui.adapter.TaskAdapter;
 import com.synguyen.se114project.viewmodel.student.CourseDetailViewModel;
+import com.synguyen.se114project.data.entity.Task;
+
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class CourseDetailFragment extends Fragment {
 
+    private String courseId;
     private CourseDetailViewModel mViewModel;
-    private TaskAdapter taskAdapter;
-    private String classId;
 
     // Views
-    private TextView tvCourseName, tvTeacherName, tvTimeSlot;
-    private ConstraintLayout headerLayout;
-    private RecyclerView rvClassTasks;
+    private TextView tvCourseName, tvTeacher, tvTime, tvNoMaterials;
+    private ConstraintLayout layoutHeader;
+    private RecyclerView rvTasks, rvMaterials;
+    private ProgressBar pbMaterials;
     private ImageView btnBack;
+
+    // Adapters
+    private TaskAdapter taskAdapter;
+    private MaterialAdapter materialAdapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Nhận classId từ Bundle arguments
         if (getArguments() != null) {
-            classId = getArguments().getString("classId");
+            // Lấy ID môn học được truyền từ màn hình danh sách (CourseFragment)
+            courseId = getArguments().getString("classId");
         }
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        // Hãy chắc chắn bạn đã tạo layout fragment_course_detail.xml
         return inflater.inflate(R.layout.fragment_course_detail, container, false);
     }
 
@@ -55,69 +75,123 @@ public class CourseDetailFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // 1. Ánh xạ View
+        // 1. Ánh xạ Views (Theo ID mới trong file XML gộp)
         tvCourseName = view.findViewById(R.id.tv_detail_course_name);
-        tvTeacherName = view.findViewById(R.id.tv_detail_teacher);
-        tvTimeSlot = view.findViewById(R.id.tv_detail_time);
-        headerLayout = view.findViewById(R.id.layout_detail_header);
-        rvClassTasks = view.findViewById(R.id.rv_class_tasks);
+        tvTeacher = view.findViewById(R.id.tv_detail_teacher);
+        tvTime = view.findViewById(R.id.tv_detail_time);
+        layoutHeader = view.findViewById(R.id.layout_detail_header);
+
+        rvTasks = view.findViewById(R.id.rv_class_tasks);
+        rvMaterials = view.findViewById(R.id.rv_materials);
+        pbMaterials = view.findViewById(R.id.pb_materials);
+        tvNoMaterials = view.findViewById(R.id.tv_no_materials);
         btnBack = view.findViewById(R.id.btn_back);
 
-        // 2. Setup RecyclerView cho danh sách bài tập
-        rvClassTasks.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        // Sử dụng TaskAdapter hiện có
-        taskAdapter = new TaskAdapter();
-        taskAdapter.setOnItemClickListener(task -> {
-            // Click vào task -> Mở chi tiết Task
-            Bundle bundle = new Bundle();
-            bundle.putString("taskId", task.getId());
-            Navigation.findNavController(view).navigate(R.id.action_courseDetailFragment_to_taskDetailFragment, bundle);
-        });
-        rvClassTasks.setAdapter(taskAdapter);
-
-        // 3. Setup ViewModel
+        // 2. Khởi tạo ViewModel
         mViewModel = new ViewModelProvider(this).get(CourseDetailViewModel.class);
 
-        // 4. Xử lý nút Back
-        if (btnBack != null) {
-            btnBack.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
+        // 3. Setup Adapters
+        setupTaskAdapter();
+        setupMaterialAdapter();
+
+        // 4. Load Data
+        if (courseId != null) {
+            loadCourseInfo();
+            loadTasks();
+            loadMaterials();
         }
 
-        // 5. Load dữ liệu
-        if (classId != null) {
-            loadData();
-        } else {
-            Toast.makeText(getContext(), "Lỗi: Không tìm thấy ID lớp học", Toast.LENGTH_SHORT).show();
-        }
+        // 5. Sự kiện Back
+        btnBack.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
     }
 
-    private void loadData() {
-        // A. Load thông tin môn học (Header)
-        mViewModel.getCourseById(classId).observe(getViewLifecycleOwner(), course -> {
+    private void setupTaskAdapter() {
+        rvTasks.setLayoutManager(new LinearLayoutManager(getContext()));
+        taskAdapter = new TaskAdapter(task -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("taskId", task.getId());
+            Navigation.findNavController(requireView())
+                    .navigate(R.id.action_courseDetailFragment_to_taskDetailFragment, bundle);
+        });
+        rvTasks.setAdapter(taskAdapter);
+    }
+
+    private void setupMaterialAdapter() {
+        rvMaterials.setLayoutManager(new LinearLayoutManager(getContext()));
+        // Khởi tạo adapter, click vào file -> tải về
+        materialAdapter = new MaterialAdapter(file -> downloadFile(file.name));
+        rvMaterials.setAdapter(materialAdapter);
+    }
+
+    private void loadCourseInfo() {
+        // Lấy thông tin chi tiết môn học từ Room
+        mViewModel.getCourseById(courseId).observe(getViewLifecycleOwner(), course -> {
             if (course != null) {
-                updateHeaderUI(course);
-            }
-        });
+                tvCourseName.setText(course.getName());
+                tvTeacher.setText(course.getTeacherName());
+                tvTime.setText(course.getTimeSlot());
 
-        // B. Load danh sách Task của môn học này
-        mViewModel.getTasksByClassId(classId).observe(getViewLifecycleOwner(), tasks -> {
-            taskAdapter.submitList(tasks);
+                // Đổi màu nền Header theo màu của môn học
+                try {
+                    if (course.getColorHex() != null && !course.getColorHex().isEmpty()) {
+                        layoutHeader.setBackgroundColor(Color.parseColor(course.getColorHex()));
+                    }
+                } catch (Exception e) {
+                    // Màu lỗi thì giữ mặc định
+                }
+            }
         });
     }
 
-    private void updateHeaderUI(Course course) {
-        tvCourseName.setText(course.getName());
-        tvTeacherName.setText(course.getTeacherName());
-        tvTimeSlot.setText(course.getTimeSlot());
-
-        // Đổi màu header theo màu môn học
-        try {
-            if (course.getColorHex() != null && !course.getColorHex().isEmpty()) {
-                headerLayout.setBackgroundColor(Color.parseColor(course.getColorHex()));
+    private void loadTasks() {
+        // Lấy danh sách bài tập của môn này từ Room
+        mViewModel.getTasksByClassId(courseId).observe(getViewLifecycleOwner(), tasks -> {
+            if (tasks != null) {
+                taskAdapter.submitList(tasks);
             }
-        } catch (IllegalArgumentException e) {
-            headerLayout.setBackgroundColor(Color.parseColor("#2196F3")); // Màu mặc định (Blue)
-        }
+        });
+    }
+
+    private void loadMaterials() {
+        // Lấy danh sách tài liệu từ Supabase (Logic giống StudentMaterialsFragment)
+        pbMaterials.setVisibility(View.VISIBLE);
+        SharedPreferences prefs = requireContext().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
+        String token = prefs.getString("ACCESS_TOKEN", "");
+
+        SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
+        JsonObject body = new JsonObject();
+        body.addProperty("prefix", "course_" + courseId); // Lọc file theo ID môn học
+        body.addProperty("limit", 100);
+
+        service.listFiles(BuildConfig.SUPABASE_KEY, "Bearer " + token, "materials", body)
+                .enqueue(new Callback<List<FileObject>>() {
+                    @Override
+                    public void onResponse(Call<List<FileObject>> call, Response<List<FileObject>> response) {
+                        pbMaterials.setVisibility(View.GONE);
+                        if (response.isSuccessful() && response.body() != null) {
+                            List<FileObject> files = response.body();
+                            if (files.isEmpty()) {
+                                tvNoMaterials.setVisibility(View.VISIBLE);
+                                rvMaterials.setVisibility(View.GONE);
+                            } else {
+                                tvNoMaterials.setVisibility(View.GONE);
+                                rvMaterials.setVisibility(View.VISIBLE);
+                                materialAdapter.setFiles(files);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<List<FileObject>> call, Throwable t) {
+                        pbMaterials.setVisibility(View.GONE);
+                        Toast.makeText(getContext(), "Không tải được tài liệu", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void downloadFile(String fileName) {
+        String url = BuildConfig.SUPABASE_URL + "/storage/v1/object/public/materials/" + fileName;
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        startActivity(browserIntent);
     }
 }

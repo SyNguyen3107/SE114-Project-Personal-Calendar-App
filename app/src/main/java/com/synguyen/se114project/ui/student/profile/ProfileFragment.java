@@ -24,7 +24,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.synguyen.se114project.R;
 import com.synguyen.se114project.data.entity.Profile; // Import Entity Profile
 import com.synguyen.se114project.data.repository.ProfileRepository;
-import com.synguyen.se114project.ui.login.LoginActivity;
+import com.synguyen.se114project.ui.auth.LoginActivity;
 
 public class ProfileFragment extends Fragment {
 

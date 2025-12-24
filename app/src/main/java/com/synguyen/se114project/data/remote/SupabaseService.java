@@ -2,6 +2,7 @@ package com.synguyen.se114project.data.remote;
 
 import com.google.gson.JsonObject;
 import com.synguyen.se114project.data.entity.Course;
+import com.synguyen.se114project.data.entity.Enrollment;
 import com.synguyen.se114project.data.entity.Profile;
 import com.synguyen.se114project.data.entity.Task;
 import com.synguyen.se114project.data.remote.response.AuthResponse;
@@ -14,13 +15,13 @@ import okhttp3.MultipartBody;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.Headers;
 import retrofit2.http.Multipart;
+import retrofit2.http.PATCH;
 import retrofit2.http.POST;
-import retrofit2.http.PATCH; // Thêm import PATCH
-import retrofit2.http.DELETE; // Thêm import DELETE
 import retrofit2.http.Part;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
@@ -42,6 +43,21 @@ public interface SupabaseService {
             @Header("Authorization") String token,
             @Query("owner_id") String ownerId
     );
+    // 1. Tìm Profile theo user_code (MSSV)
+    @GET("rest/v1/profiles")
+    Call<List<Profile>> getProfileByCode(
+            @Header("apikey") String apiKey,
+            @Header("Authorization") String token,
+            @Query("user_code") String userCode
+    );
+
+    // 2. Thêm sinh viên vào lớp (Ghi vào bảng enrollments)
+    @POST("rest/v1/enrollments")
+    Call<Void> enrollStudent(
+            @Header("apikey") String apiKey,
+            @Header("Authorization") String token,
+            @Body Enrollment enrollment // Đảm bảo bạn đã tạo file Entity Enrollment.java ở bước trước
+    );
 
     // 3. TẠO TASK MỚI
     @POST("rest/v1/tasks")
@@ -53,11 +69,11 @@ public interface SupabaseService {
     );
 
     // 5. LẤY KHÓA HỌC
-    @GET("rest/v1/courses?select=*")
+    @GET("rest/v1/courses_with_stats?select=*")
     Call<List<Course>> getCourses(
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
-            @Query("owner_id") String ownerId
+            @Query("teacher_id") String teacherId
     );
 
     @GET("rest/v1/tasks?select=*")
@@ -66,9 +82,9 @@ public interface SupabaseService {
             @Header("Authorization") String token,
             @Query("course_id") String courseId
     );
+
     @POST("rest/v1/courses")
-    @Headers({"Prefer: return=representation", "Content-Type: application/json"})
-    Call<List<Course>> createCourse(
+    Call<Void> createCourse(
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
             @Body Course course
@@ -106,7 +122,7 @@ public interface SupabaseService {
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
             @Query("id") String queryId,
-            @Body Profile profile
+            @Body JsonObject body // <--- Thay Profile bằng JsonObject
     );
 
     // 10. UPDATE TASK
@@ -127,7 +143,7 @@ public interface SupabaseService {
             @Query("id") String taskId
     );
 
-    // 12. LẤY SINH VIÊN TRONG LỚP (Dùng EnrollmentResponse thay vì JsonObject)
+    // 12. LẤY SINH VIÊN TRONG LỚP (Dùng cho màn hình fragment_teacher_students)
     // Lý do: Supabase trả về dạng lồng nhau [{"profiles": {...}}]
     @GET("rest/v1/enrollments?select=profiles(*)")
     Call<List<EnrollmentResponse>> getStudentsInCourse(
@@ -135,7 +151,13 @@ public interface SupabaseService {
             @Header("Authorization") String token,
             @Query("course_id") String courseId
     );
-
+    @GET("rest/v1/courses") //Dùng trong fragment_course của student
+    Call<List<Course>> getStudentCourses(
+            @Header("apikey") String apiKey,
+            @Header("Authorization") String token,
+            @Query("select") String selectQuery, // Truyền: "*,enrollments!inner(student_id)"
+            @Query("enrollments.student_id") String studentIdFilter // Truyền: "eq.USER_ID"
+    );
     // 13. UPLOAD FILE
     @Multipart
     @POST("storage/v1/object/{bucket}/{path}")

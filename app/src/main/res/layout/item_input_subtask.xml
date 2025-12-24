@@ -23,6 +23,7 @@
         android:layout_weight="1"
         android:background="@android:color/transparent"
         android:hint="Enter subtask title"
+        android:minHeight="48dp"
         android:padding="8dp"
         android:textSize="14sp" />
 

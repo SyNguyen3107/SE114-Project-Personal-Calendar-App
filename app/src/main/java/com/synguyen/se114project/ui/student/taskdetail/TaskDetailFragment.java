@@ -70,16 +70,11 @@ public class TaskDetailFragment extends Fragment {
     private ImageView btnBack;
     private View btnMoreOptions;
     private Button btnStart, btnTakeBreak;
-
-    // UI Upload (Sử dụng layoutUpload có sẵn trong XML)
     private View btnUploadLayout;
     private TextView tvUploadStatus;
     private ProgressBar pbUpload;
-
-    // Biến lưu file đã chọn
     private Uri selectedFileUri;
 
-    // Launcher chọn file PDF
     private final ActivityResultLauncher<String> pickFileLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
             uri -> {
@@ -227,7 +222,6 @@ public class TaskDetailFragment extends Fragment {
 
             // 2. Tạo RequestBody (PDF)
             RequestBody requestFile = RequestBody.create(MediaType.parse("application/pdf"), file);
-            MultipartBody.Part body = MultipartBody.Part.createFormData("file", file.getName(), requestFile);
 
             // 3. Lấy thông tin User & Token
             SharedPreferences prefs = requireActivity().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
@@ -238,6 +232,10 @@ public class TaskDetailFragment extends Fragment {
             String serverFileName = "assign_" + currentTask.getId() + "_" + userId + ".pdf";
 
             // 5. Gọi API với x-upsert: true
+            // Thay vì dùng file.getName() (chứa tiếng Việt), hãy dùng serverFileName (tiếng Anh)
+            MultipartBody.Part body = MultipartBody.Part.createFormData("file", serverFileName, requestFile);
+            // -------------------------------------
+
             SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
             service.uploadFile(BuildConfig.SUPABASE_KEY, "Bearer " + token, "true", "assignments", serverFileName, body)
                     .enqueue(new Callback<ResponseBody>() {
@@ -368,13 +366,26 @@ public class TaskDetailFragment extends Fragment {
     private void setupRecyclerView() {
         rvSubtasks.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new SubtaskAdapter();
+
+        // Cập nhật lại Listener với đầy đủ 3 phương thức
         adapter.setOnSubtaskClickListener(new SubtaskAdapter.OnSubtaskActionListener() {
             @Override
             public void onCheck(Subtask subtask, boolean isChecked) {
                 mViewModel.updateSubtaskStatus(subtask, isChecked);
             }
+
             @Override
-            public void onDelete(Subtask subtask) {}
+            public void onDelete(Subtask subtask) {
+                // Màn hình chính không có nút xóa nên để trống
+            }
+
+            @Override
+            public void onEdit(Subtask subtask) {
+                // [FIX LỖI] Phải implement phương thức này để không bị báo đỏ
+                // Bạn có thể để trống (không cho sửa ở màn hình ngoài)
+                // hoặc gọi hàm sửa tên nếu muốn:
+                // showRenameSubtaskDialog(subtask, adapter);
+            }
         });
         rvSubtasks.setAdapter(adapter);
     }
@@ -437,7 +448,21 @@ public class TaskDetailFragment extends Fragment {
 
         rvDialog.setLayoutManager(new LinearLayoutManager(getContext()));
         SubtaskAdapter dialogAdapter = new SubtaskAdapter();
-        List<Subtask> tempSubtasks = new ArrayList<>(currentSubtasks);
+
+        // Tạo bản sao danh sách để không ảnh hưởng trực tiếp UI bên ngoài cho đến khi Save/Refresh
+        List<Subtask> tempSubtasks = new ArrayList<>();
+        if (currentSubtasks != null) {
+            for (Subtask original : currentSubtasks) {
+                Subtask copy = new Subtask();
+                copy.setId(original.getId());
+                copy.setTaskId(original.getTaskId());
+                copy.setTitle(original.getTitle());
+                copy.setCompleted(original.isCompleted());
+                // Copy thêm các trường khác nếu cần (isSynced, isDeleted...)
+                tempSubtasks.add(copy);
+            }
+        }
+
         dialogAdapter.submitList(tempSubtasks);
 
         dialogAdapter.setOnSubtaskClickListener(new SubtaskAdapter.OnSubtaskActionListener() {
@@ -451,7 +476,12 @@ public class TaskDetailFragment extends Fragment {
                 List<Subtask> current = new ArrayList<>(dialogAdapter.getCurrentList());
                 current.remove(subtask);
                 dialogAdapter.submitList(current);
-                mViewModel.deleteSubtask(subtask);
+                mViewModel.deleteSubtask(subtask); // Xóa ngay trong DB
+            }
+
+            @Override
+            public void onEdit(Subtask subtask) {
+                showRenameSubtaskDialog(subtask, dialogAdapter);
             }
         });
         rvDialog.setAdapter(dialogAdapter);
@@ -459,7 +489,7 @@ public class TaskDetailFragment extends Fragment {
         btnAdd.setOnClickListener(v -> {
             if (currentTask != null) {
                 Subtask newSub = new Subtask(currentTask.getId(), "New Subtask");
-                mViewModel.addSubtask(newSub);
+                mViewModel.addSubtask(newSub); // Thêm ngay vào DB
                 List<Subtask> current = new ArrayList<>(dialogAdapter.getCurrentList());
                 current.add(newSub);
                 dialogAdapter.submitList(current);
@@ -467,6 +497,7 @@ public class TaskDetailFragment extends Fragment {
         });
 
         btnSave.setOnClickListener(v -> {
+            // Lưu trạng thái hoàn thành (và tên mới nếu có thay đổi)
             for (Subtask s : dialogAdapter.getCurrentList()) {
                 mViewModel.updateSubtaskStatus(s, s.isCompleted());
             }
@@ -476,5 +507,23 @@ public class TaskDetailFragment extends Fragment {
 
         btnClose.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
+    }
+    private void showRenameSubtaskDialog(Subtask subtask, SubtaskAdapter adapter) {
+        android.widget.EditText editText = new android.widget.EditText(requireContext());
+        editText.setText(subtask.getTitle());
+        editText.setPadding(50, 30, 50, 30);
+
+        new android.app.AlertDialog.Builder(requireContext())
+                .setTitle("Đổi tên công việc")
+                .setView(editText)
+                .setPositiveButton("Lưu", (dialog, which) -> {
+                    String newTitle = editText.getText().toString().trim();
+                    if (!newTitle.isEmpty()) {
+                        subtask.setTitle(newTitle);
+                        adapter.notifyDataSetChanged(); // Cập nhật giao diện list ngay lập tức
+                    }
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
     }
 }

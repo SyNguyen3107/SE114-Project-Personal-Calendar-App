@@ -19,9 +19,11 @@ import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Response;
+
 public class TaskRepository {
 
     private final TaskDao mTaskDao;
+    private final AppDatabase mDatabase; // [THÊM MỚI]: Khai báo biến Database để dùng cho Transaction
     private final LiveData<List<Task>> mAllTasks;
     private final SupabaseService mSupabaseService;
     private final SharedPreferences mPrefs;
@@ -29,8 +31,10 @@ public class TaskRepository {
     private static final String SUPABASE_KEY = BuildConfig.SUPABASE_KEY;
 
     public TaskRepository(Application application) {
-        AppDatabase db = AppDatabase.getDatabase(application);
-        mTaskDao = db.taskDao();
+        // [SỬA ĐOẠN NÀY]: Gán vào biến toàn cục mDatabase thay vì biến cục bộ 'db'
+        mDatabase = AppDatabase.getDatabase(application);
+        mTaskDao = mDatabase.taskDao();
+
         mAllTasks = mTaskDao.getAllTasks();
         mSupabaseService = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
         mPrefs = application.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
@@ -53,7 +57,6 @@ public class TaskRepository {
         return mTaskDao.getTasksByDateRange(start, end);
     }
 
-    // MỚI: Lấy danh sách Task theo Course ID
     public LiveData<List<Task>> getTasksByCourseId(String courseId) {
         return mTaskDao.getTasksByCourseId(courseId);
     }
@@ -62,30 +65,24 @@ public class TaskRepository {
 
     public void insert(Task task) {
         AppDatabase.databaseWriteExecutor.execute(() -> {
-            // Lấy USER_ID từ SharedPreferences để làm owner_id
             String userId = mPrefs.getString("USER_ID", "");
             task.setOwnerId(userId);
 
-            // Bước 1: Lưu vào Room trước (Để UI hiện ngay lập tức)
             task.setSynced(false);
             mTaskDao.insertTask(task);
 
-            // Bước 2: Lấy Token (đã lưu khi Login)
             String token = "Bearer " + mPrefs.getString("ACCESS_TOKEN", "");
 
-            // Bước 3: Gọi API đồng bộ lên Cloud
             try {
                 Call<List<Task>> call = mSupabaseService.createTask(SUPABASE_KEY, token, task);
-                Response<List<Task>> response = call.execute(); // Dùng execute() vì đã ở trong Thread background
+                Response<List<Task>> response = call.execute();
 
                 if (response.isSuccessful()) {
-                    // Bước 4: Nếu thành công, update lại trạng thái Local
                     task.setSynced(true);
                     mTaskDao.updateTask(task);
                     Log.d("Sync", "Pushed task to Cloud success: " + task.getTitle());
                 } else {
                     Log.e("Sync", "Failed to push task: " + response.code() + " - " + response.message());
-                    // Nếu thất bại, task vẫn còn trong Room với isSynced = false
                 }
             } catch (Exception e) {
                 Log.e("Sync", "Network error: " + e.getMessage());
@@ -93,18 +90,14 @@ public class TaskRepository {
         });
     }
 
-    // 2. UPDATE
     public void update(Task task) {
         AppDatabase.databaseWriteExecutor.execute(() -> {
-            // Bước 1: Update Local
             task.setLastUpdated(System.currentTimeMillis());
             task.setSynced(false);
             mTaskDao.updateTask(task);
 
-            // Bước 2: Sync Cloud
             String token = "Bearer " + mPrefs.getString("ACCESS_TOKEN", "");
             try {
-                // Lưu ý: task.id phải đúng định dạng "eq.UUID" khi truyền vào @Query
                 String queryId = "eq." + task.getId();
                 Call<Void> call = mSupabaseService.updateTask(SUPABASE_KEY, token, queryId, task);
                 Response<Void> response = call.execute();
@@ -120,14 +113,11 @@ public class TaskRepository {
         });
     }
 
-    // 3. DELETE (Soft Delete Sync)
     public void delete(Task task) {
         AppDatabase.databaseWriteExecutor.execute(() -> {
-            // Bước 1: Soft Delete ở Local (đánh dấu đã xóa)
             long currentTime = System.currentTimeMillis();
             mTaskDao.softDeleteTask(task.getId(), currentTime);
 
-            // Bước 2: Gọi API Xóa trên Cloud
             String token = "Bearer " + mPrefs.getString("ACCESS_TOKEN", "");
             try {
                 String queryId = "eq." + task.getId();
@@ -135,29 +125,30 @@ public class TaskRepository {
                 Response<Void> response = call.execute();
 
                 if (response.isSuccessful()) {
-                    // Nếu xóa trên cloud thành công -> Xóa cứng luôn ở Local để dọn dẹp
                     mTaskDao.deletePhysicalTask(task);
                 }
             } catch (Exception e) {
                 Log.e("Sync", "Delete failed: " + e.getMessage());
-                // Để lại trạng thái isDeleted=true trong Room để WorkManager xóa sau
             }
         });
     }
 
-    // Insert Task + Subtasks (Logic cho AddEditFragment)
+    // [QUAN TRỌNG]: Hàm này giờ đã hoạt động vì có mDatabase
     public void insertTaskWithSubtasks(Task task, List<Subtask> subtasks) {
-        insert(task); // Sử dụng hàm insert đã có logic Sync
+        AppDatabase.databaseWriteExecutor.execute(() -> {
+            mDatabase.runInTransaction(() -> {
+                // 1. Lưu Task cha trước
+                mTaskDao.insertTask(task);
 
-        // Gán ID cho con và lưu con
-        if (subtasks != null && !subtasks.isEmpty()) {
-            AppDatabase.databaseWriteExecutor.execute(() -> {
-                for (Subtask sub : subtasks) {
-                    sub.setTaskId(task.getId());
+                // 2. Gán ID và lưu Subtask con
+                if (subtasks != null && !subtasks.isEmpty()) {
+                    for (Subtask sub : subtasks) {
+                        sub.setTaskId(task.getId());
+                    }
+                    mTaskDao.insertSubtasks(subtasks);
                 }
-                mTaskDao.insertSubtasks(subtasks);
             });
-        }
+        });
     }
 
     // --- WRITE OPERATIONS (SUBTASK) ---

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/teacher_nav_graph"
+    app:startDestination="@id/teacherScheduleFragment">
+
+    <fragment
+        android:id="@+id/teacherScheduleFragment"
+        android:name="com.synguyen.se114project.ui.teacher.course.TeacherCourseFragment"
+        android:label="Teacher Courses"
+        tools:layout="@layout/fragment_teacher_course" />
+
+    <fragment
+        android:id="@+id/communityFragment"
+        android:name="com.synguyen.se114project.ui.common.CommunityFragment"
+        android:label="Community"
+        tools:layout="@layout/fragment_community">
+
+        <action
+            android:id="@+id/action_community_to_profile"
+            app:destination="@id/profileFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.synguyen.se114project.ui.student.profile.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile" />
+
+</navigation>

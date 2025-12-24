@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,6 +34,7 @@ public class ScheduleFragment extends Fragment {
     private CalendarView calendarView;
     private RecyclerView rvScheduleTasks;
     private TaskAdapter adapter;
+    ImageView btnBack;
 
     @Nullable
     @Override
@@ -47,10 +49,15 @@ public class ScheduleFragment extends Fragment {
         // Ánh xạ View
         calendarView = view.findViewById(R.id.calendarView);
         rvScheduleTasks = view.findViewById(R.id.rvScheduleTasks);
-
+        ImageView btnBack = view.findViewById(R.id.btnBack);
         // 2. Setup RecyclerView với Adapter mới (UUID logic)
         rvScheduleTasks.setLayoutManager(new LinearLayoutManager(getContext()));
-
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> {
+                // Điều hướng quay lại màn hình trước đó (Home)
+                Navigation.findNavController(view).navigateUp();
+            });
+        }
         adapter = new TaskAdapter();
         adapter.setOnItemClickListener(task -> {
             Bundle bundle = new Bundle();

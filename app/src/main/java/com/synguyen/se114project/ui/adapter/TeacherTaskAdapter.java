@@ -4,32 +4,26 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.synguyen.se114project.R;
 import com.synguyen.se114project.data.entity.Task;
-
 import java.util.List;
 
 public class TeacherTaskAdapter extends RecyclerView.Adapter<TeacherTaskAdapter.TaskViewHolder> {
 
     private List<Task> taskList;
-    private OnTaskClickListener listener; // 1. Khai báo Listener
+    private final OnTaskClickListener listener;
 
-    // 2. Interface lắng nghe sự kiện
     public interface OnTaskClickListener {
         void onTaskClick(Task task);
     }
 
-    // 3. Cập nhật Constructor để nhận Listener
     public TeacherTaskAdapter(List<Task> taskList, OnTaskClickListener listener) {
         this.taskList = taskList;
         this.listener = listener;
     }
 
-    // Hàm cập nhật dữ liệu
     public void updateData(List<Task> newTasks) {
         this.taskList = newTasks;
         notifyDataSetChanged();
@@ -38,6 +32,7 @@ public class TeacherTaskAdapter extends RecyclerView.Adapter<TeacherTaskAdapter.
     @NonNull
     @Override
     public TaskViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        // Đảm bảo file item_task_teacher.xml đã tồn tại
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_task_teacher, parent, false);
         return new TaskViewHolder(view);
     }
@@ -54,15 +49,17 @@ public class TeacherTaskAdapter extends RecyclerView.Adapter<TeacherTaskAdapter.
     }
 
     class TaskViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitle, tvDeadline, tvDesc;
+        // Khai báo đúng các view trong layout item_task_teacher
+        TextView tvTitle, tvDate, tvSubtitle, tvStatus;
 
         public TaskViewHolder(@NonNull View itemView) {
             super(itemView);
+            // Ánh xạ đúng ID trong XML
             tvTitle = itemView.findViewById(R.id.tvTaskTitle);
-            tvDeadline = itemView.findViewById(R.id.tvTaskDeadline);
-            // tvDesc = itemView.findViewById(R.id.tvTaskDesc); // Nếu layout có
+            tvDate = itemView.findViewById(R.id.tvTaskDate);       // SỬA: tvTaskDate thay vì tvTaskDeadline
+            tvSubtitle = itemView.findViewById(R.id.tvTaskSubtitle); // SỬA: tvTaskSubtitle thay vì tvDesc
+            tvStatus = itemView.findViewById(R.id.tvTaskStatus);
 
-            // 4. Bắt sự kiện Click vào cả Item
             itemView.setOnClickListener(v -> {
                 if (listener != null && getAdapterPosition() != RecyclerView.NO_POSITION) {
                     listener.onTaskClick(taskList.get(getAdapterPosition()));
@@ -72,7 +69,11 @@ public class TeacherTaskAdapter extends RecyclerView.Adapter<TeacherTaskAdapter.
 
         public void bind(Task task) {
             tvTitle.setText(task.getTitle());
-            tvDeadline.setText("Deadline: " + task.getTime());
+            tvSubtitle.setText(task.getSubTitle() != null ? task.getSubTitle() : "");
+
+            // Hiển thị Deadline (Ưu tiên hiển thị time dạng chuỗi bạn nhập)
+            String timeText = task.getTime() != null ? task.getTime() : "";
+            tvDate.setText(timeText);
         }
     }
 }

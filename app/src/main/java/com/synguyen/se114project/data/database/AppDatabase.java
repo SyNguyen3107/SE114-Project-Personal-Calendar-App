@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 // 1. Khai báo các Entity (Bảng) và phiên bản Database
-@Database(entities = {Task.class, Subtask.class, Course.class}, version = 7, exportSchema = false)
+@Database(entities = {Task.class, Subtask.class, Course.class}, version = 8, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     // 2. Khai báo các DAO (Cổng truy cập)
