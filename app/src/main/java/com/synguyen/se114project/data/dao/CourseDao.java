@@ -38,6 +38,11 @@ public interface CourseDao {
     void softDeleteCourse(String id, long currentTime);
 
     // Sync: Lấy các lớp chưa đồng bộ
+
+    // 2. THÊM MỚI: Hàm này để xóa sạch dữ liệu cũ (bao gồm data fake) khi Sync thành công
+    // Chúng ta xóa tất cả để đảm bảo Local giống hệt Server
+    @Query("DELETE FROM courses")
+    void deleteAllCourses();
     @Query("SELECT * FROM courses WHERE is_synced = 0")
     List<Course> getUnsyncedCourses();
 }

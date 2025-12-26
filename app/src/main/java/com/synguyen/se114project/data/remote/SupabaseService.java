@@ -69,13 +69,13 @@ public interface SupabaseService {
     );
 
     // 5. LẤY KHÓA HỌC
+    //Dùng cho teacher, chỉ lấy lớp do mình dạy
     @GET("rest/v1/courses_with_stats?select=*")
     Call<List<Course>> getCourses(
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
             @Query("teacher_id") String teacherId
     );
-
     @GET("rest/v1/tasks?select=*")
     Call<List<Task>> getTasksByCourse(
             @Header("apikey") String apiKey,
@@ -151,12 +151,11 @@ public interface SupabaseService {
             @Header("Authorization") String token,
             @Query("course_id") String courseId
     );
-    @GET("rest/v1/courses") //Dùng trong fragment_course của student
-    Call<List<Course>> getStudentCourses(
+    @POST("rest/v1/rpc/get_student_courses") //Dùng trong fragment_course của student
+    Call<List<Course>> getStudentCoursesRPC(
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
-            @Query("select") String selectQuery, // Truyền: "*,enrollments!inner(student_id)"
-            @Query("enrollments.student_id") String studentIdFilter // Truyền: "eq.USER_ID"
+            @Body JsonObject body // Body sẽ chứa tham số json: {"sid": "uuid..."}
     );
     // 13. UPLOAD FILE
     @Multipart

@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
+// import android.widget.ProgressBar; // Gợi ý: Nên thêm ProgressBar
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,6 +25,7 @@ public class CourseFragment extends Fragment {
     private CourseViewModel mViewModel;
     private RecyclerView rvCourse;
     private CourseAdapter adapter;
+    // private ProgressBar progressBar; // Nếu giao diện có ProgressBar
 
     @Nullable
     @Override
@@ -35,22 +37,23 @@ public class CourseFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Ánh xạ View
         rvCourse = view.findViewById(R.id.rv_courses);
+        // progressBar = view.findViewById(R.id.progress_bar);
+
         rvCourse.setLayoutManager(new LinearLayoutManager(getContext()));
 
         // Setup Adapter
         adapter = new CourseAdapter(course -> {
-            // Xử lý khi click vào môn học -> Chuyển sang màn hình chi tiết môn học
             Bundle bundle = new Bundle();
-            bundle.putString("classId", course.getId()); // Truyền Class ID (UUID) sang màn hình chi tiết môn học
-
+            // Đảm bảo course.getId() trả về đúng UUID của lớp học trong Supabase
+            bundle.putString("classId", course.getId());
 
             NavController navController = Navigation.findNavController(view);
             try {
-                // Điều hướng sang ClassDetailFragment
                 navController.navigate(R.id.action_courseFragment_to_courseDetailFragment, bundle);
             } catch (Exception e) {
-                Toast.makeText(getContext(), "Chưa tạo màn hình chi tiết môn học!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Chưa tạo màn hình chi tiết!", Toast.LENGTH_SHORT).show();
             }
         });
         rvCourse.setAdapter(adapter);
@@ -58,14 +61,21 @@ public class CourseFragment extends Fragment {
         // Setup ViewModel
         mViewModel = new ViewModelProvider(this).get(CourseViewModel.class);
 
-        // Quan sát dữ liệu
+        // 1. Quan sát dữ liệu từ Room
         mViewModel.getAllCourses().observe(getViewLifecycleOwner(), courses -> {
+            // Cập nhật list bất kể có rỗng hay không (để clear list nếu user đăng xuất/đổi tk)
+            adapter.submitList(courses);
+
+            // Nếu muốn hiện thông báo khi không có lớp:
             if (courses == null || courses.isEmpty()) {
-                // Nếu chưa có dữ liệu, tạo mẫu để test giao diện
-                mViewModel.createSampleData();
+                // binding.txtEmpty.setVisibility(View.VISIBLE);
             } else {
-                adapter.submitList(courses);
+                // binding.txtEmpty.setVisibility(View.GONE);
             }
         });
+
+        // 2. GỌI API LẤY DỮ LIỆU THẬT
+        // Gọi ngay khi màn hình được tạo để đảm bảo dữ liệu mới nhất
+        mViewModel.refreshStudentCourses();
     }
 }

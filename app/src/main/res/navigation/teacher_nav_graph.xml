@@ -7,8 +7,13 @@
 
     <fragment
         android:id="@+id/teacherScheduleFragment"
+        android:name="com.synguyen.se114project.ui.teacher.schedule.TeacherScheduleFragment"
+        android:label="Schedule"
+        tools:layout="@layout/fragment_teacher_schedule" />
+    <fragment
+        android:id="@+id/teacherCourseFragment"
         android:name="com.synguyen.se114project.ui.teacher.course.TeacherCourseFragment"
-        android:label="Teacher Courses"
+        android:label="Courses"
         tools:layout="@layout/fragment_teacher_course" />
 
     <fragment
@@ -16,7 +21,6 @@
         android:name="com.synguyen.se114project.ui.common.CommunityFragment"
         android:label="Community"
         tools:layout="@layout/fragment_community">
-
         <action
             android:id="@+id/action_community_to_profile"
             app:destination="@id/profileFragment" />

@@ -16,6 +16,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.synguyen.se114project.R;
 import com.synguyen.se114project.data.entity.Course;
 
+import java.util.Objects;
+
 public class CourseAdapter extends ListAdapter<Course, CourseAdapter.CourseViewHolder> {
 
     private final OnItemClickListener listener;
@@ -32,14 +34,17 @@ public class CourseAdapter extends ListAdapter<Course, CourseAdapter.CourseViewH
     private static final DiffUtil.ItemCallback<Course> DIFF_CALLBACK = new DiffUtil.ItemCallback<Course>() {
         @Override
         public boolean areItemsTheSame(@NonNull Course oldItem, @NonNull Course newItem) {
-            return oldItem.getId().equals(newItem.getId());
+            return Objects.equals(oldItem.getId(), newItem.getId());
         }
 
         @Override
         public boolean areContentsTheSame(@NonNull Course oldItem, @NonNull Course newItem) {
-            return oldItem.getName().equals(newItem.getName()) &&
-                    oldItem.getDescription().equals(newItem.getDescription()) &&
-                    oldItem.getColorHex().equals(newItem.getColorHex());
+            return Objects.equals(oldItem.getName(), newItem.getName()) &&
+                    Objects.equals(oldItem.getDescription(), newItem.getDescription()) &&
+                    Objects.equals(oldItem.getTeacherName(), newItem.getTeacherName()) && // Đã thêm ở bước trước
+                    Objects.equals(oldItem.getTimeSlot(), newItem.getTimeSlot()) &&       // Đã thêm ở bước trước
+                    Objects.equals(oldItem.getDateInfo(), newItem.getDateInfo()) &&       // Nên so sánh cả DateInfo
+                    Objects.equals(oldItem.getColorHex(), newItem.getColorHex());
         }
     };
 
@@ -53,7 +58,9 @@ public class CourseAdapter extends ListAdapter<Course, CourseAdapter.CourseViewH
     @Override
     public void onBindViewHolder(@NonNull CourseViewHolder holder, int position) {
         Course course = getItem(position);
-        holder.bind(course, listener);
+        if (course != null) { // Check null cho item
+            holder.bind(course, listener);
+        }
     }
 
     static class CourseViewHolder extends RecyclerView.ViewHolder {
@@ -74,27 +81,37 @@ public class CourseAdapter extends ListAdapter<Course, CourseAdapter.CourseViewH
         public void bind(Course course, OnItemClickListener listener) {
             tvName.setText(course.getName());
 
-            // Format mô tả: "Ngày • Mô tả"
-            String descText = (course.getDateInfo() != null ? course.getDateInfo() : "") +
-                    " • " +
-                    (course.getDescription() != null ? course.getDescription() : "");
-            tvDesc.setText(descText);
+            // Xử lý chuỗi Date/Description an toàn
+            String dateInfo = course.getDateInfo() != null ? course.getDateInfo() : "";
+            String desc = course.getDescription() != null ? course.getDescription() : "";
 
-            tvTime.setText(course.getTimeSlot());
-            tvTeacher.setText(course.getTeacherName());
+            if (!dateInfo.isEmpty() && !desc.isEmpty()) {
+                tvDesc.setText(dateInfo + " • " + desc);
+            } else {
+                tvDesc.setText(dateInfo + desc); // Chỉ hiện cái nào có dữ liệu
+            }
 
-            // Đổi màu nền Card theo mã màu trong DB
+            // Xử lý TimeSlot (Nếu null thì hiện "TBA" - To Be Announced)
+            tvTime.setText(course.getTimeSlot() != null ? course.getTimeSlot() : "TBA");
+
+            // Xử lý TeacherName (Nếu null thì hiện ID hoặc "Unknown")
+            if (course.getTeacherName() != null) {
+                tvTeacher.setText(course.getTeacherName());
+            } else {
+                // Fallback nếu RPC chưa join được tên
+                tvTeacher.setText("Giảng viên: --");
+            }
+
+            // Xử lý Màu nền (Giữ nguyên logic tốt của bạn)
             try {
                 if (course.getColorHex() != null && !course.getColorHex().isEmpty()) {
                     layoutBg.setBackgroundColor(Color.parseColor(course.getColorHex()));
+                } else {
+                    layoutBg.setBackgroundColor(Color.parseColor("#2196F3")); // Màu default
                 }
             } catch (IllegalArgumentException e) {
-                // Màu lỗi thì dùng mặc định (Xanh)
                 layoutBg.setBackgroundColor(Color.parseColor("#2196F3"));
             }
-
-            // TODO: Nếu sau này có icon riêng cho từng môn, load ảnh tại đây
-            // imgIcon.setImageResource(...);
 
             itemView.setOnClickListener(v -> listener.onItemClick(course));
         }

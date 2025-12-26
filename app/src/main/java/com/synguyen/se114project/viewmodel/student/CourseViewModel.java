@@ -19,23 +19,16 @@ public class CourseViewModel extends AndroidViewModel {
 
     public CourseViewModel(@NonNull Application application) {
         super(application);
-        // Lưu ý: Tôi giả định bạn đã đổi tên ClassroomRepository thành CourseRepository
         mRepository = new CourseRepository(application);
+        // LiveData này tự động cập nhật khi Room Database thay đổi
         mAllCourses = mRepository.getAllCourses();
     }
 
     public LiveData<List<Course>> getAllCourses() {
         return mAllCourses;
     }
-
-    // Hàm tạo dữ liệu mẫu (Chỉ dùng để test khi chưa có data)
-    public void createSampleData() {
-        List<Course> samples = new ArrayList<>();
-        samples.add(new Course("Mathematics", "Chapter 5: Calculus", "Jason Mayor", "05:30 - 06:30", "04/21", "#2196F3")); // Blue
-        samples.add(new Course("History", "Introduction to WW2", "Hana Montana", "07:30 - 08:30", "05/21", "#FFC107")); // Amber
-        samples.add(new Course("Science", "Chapter 12: Physics", "Albert Kelberg", "07:30 - 08:00", "06/21", "#4CAF50")); // Green
-        samples.add(new Course("Spanish", "Chapter 5: Basics", "Sofia Vergara", "09:00 - 10:00", "04/21", "#FF5722")); // Deep Orange
-
-        mRepository.insertAll(samples);
+    public void refreshStudentCourses() {
+        // Gọi hàm syncStudentCourses() mà chúng ta đã viết ở bước trước trong Repository
+        mRepository.syncStudentCourses();
     }
 }

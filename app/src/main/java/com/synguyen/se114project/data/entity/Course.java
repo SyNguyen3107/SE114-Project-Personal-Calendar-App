@@ -44,7 +44,7 @@ public class Course implements Serializable {
     @SerializedName("color_hex")
     public String colorHex;
     @SerializedName("student_count") // Tên cột trong View SQL
-    private int studentCount;
+    public int studentCount;
 
     // --- SYNC FIELDS ---
 

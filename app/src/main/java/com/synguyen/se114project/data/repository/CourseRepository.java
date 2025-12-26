@@ -7,6 +7,7 @@ import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 
+import com.google.gson.JsonObject;
 import com.synguyen.se114project.BuildConfig;
 import com.synguyen.se114project.data.dao.CourseDao;
 import com.synguyen.se114project.data.dao.TaskDao;
@@ -15,38 +16,32 @@ import com.synguyen.se114project.data.entity.Course;
 import com.synguyen.se114project.data.remote.RetrofitClient;
 import com.synguyen.se114project.data.remote.SupabaseService;
 import com.synguyen.se114project.data.remote.response.FileObject;
-//import io.supabase.gotrue.GoTrueClient;
-//import io.supabase.postgrest.PostgrestClient;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import retrofit2.Call;
+import retrofit2.Response;
 
 public class CourseRepository {
     private TaskDao mTaskDao;
     private final CourseDao mCourseDao;
     private final SupabaseService mSupabaseService;
-    private final SharedPreferences mPrefs; // 1. THÊM: Biến SharedPreferences
+    private final SharedPreferences mPrefs;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    // Thêm biến này để tránh lỗi "Cannot resolve symbol 'mAllCourses'"
     private LiveData<List<Course>> mAllCourses;
 
     public CourseRepository(Application application) {
         AppDatabase db = AppDatabase.getDatabase(application);
 
-        // 2. SỬA: Gán vào biến mSupabaseService thay vì tên class
         mSupabaseService = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
-
         mCourseDao = db.courseDao();
         mTaskDao = db.taskDao();
-
-        // 3. THÊM: Khởi tạo SharedPreferences
         mPrefs = application.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
 
-        // Khởi tạo LiveData
+        // Khởi tạo LiveData từ Room (để hiển thị lên UI)
         mAllCourses = mCourseDao.getAllCourses();
     }
 
@@ -62,7 +57,6 @@ public class CourseRepository {
         AppDatabase.databaseWriteExecutor.execute(() -> mCourseDao.insertCourse(Course));
     }
 
-    // Hàm chèn nhiều lớp (cho dữ liệu mẫu)
     public void insertAll(List<Course> Courses) {
         AppDatabase.databaseWriteExecutor.execute(() -> mCourseDao.insertCourses(Courses));
     }
@@ -81,68 +75,85 @@ public class CourseRepository {
         });
     }
 
-    // Hàm Sync: Kéo từ Cloud -> Local (Giả lập)
+    // Hàm Sync chung (nếu cần mở rộng sau này)
     public void sync() {
         executor.execute(() -> {
             try {
-                Log.d("SYNC", "Bắt đầu đồng bộ dữ liệu từ Supabase...");
-                // Logic sync chung (nếu cần)
-                Log.d("SYNC", "Đồng bộ hoàn tất!");
-
+                Log.d("SYNC", "Bắt đầu đồng bộ dữ liệu...");
             } catch (Exception e) {
                 Log.e("SYNC", "Lỗi khi đồng bộ: " + e.getMessage());
             }
         });
     }
 
-    // Hàm Sync Student (Bước 2 của bạn)
+    // =========================================================================
+    // [UPDATE QUAN TRỌNG] Hàm Sync Student Courses dùng RPC
+    // =========================================================================
     public void syncStudentCourses() {
         executor.execute(() -> {
             try {
-                // 4. SỬA: Dùng mPrefs đã khai báo
                 String userId = mPrefs.getString("USER_ID", "");
-                String token = "Bearer " + mPrefs.getString("ACCESS_TOKEN", "");
+                String token = mPrefs.getString("ACCESS_TOKEN", "");
+                String authHeader = "Bearer " + token;
 
-                if (userId.isEmpty()) return;
+                if (userId.isEmpty()) {
+                    Log.e("SYNC_COURSE", "User ID trống, không thể đồng bộ.");
+                    return;
+                }
 
-                Log.d("SYNC_COURSE", "Bắt đầu tải khóa học cho SV: " + userId);
+                Log.d("SYNC_COURSE", "Bắt đầu gọi RPC lấy lớp cho User: " + userId);
 
-                // Gọi API lấy các môn có trong bảng enrollments của user này
-                // Cú pháp: select=*,enrollments!inner(student_id) để join bảng
-                Call<List<Course>> call = mSupabaseService.getStudentCourses(
+                // 1. Tạo Body JSON chứa tham số 'sid'
+                JsonObject jsonBody = new JsonObject();
+                jsonBody.addProperty("sid", userId);
+
+                // 2. Gọi hàm RPC từ SupabaseService (đã cập nhật dùng POST & JsonObject)
+                Call<List<Course>> call = mSupabaseService.getStudentCoursesRPC(
                         BuildConfig.SUPABASE_KEY,
-                        token,
-                        "*,enrollments!inner(student_id)",
-                        "eq." + userId
+                        authHeader,
+                        jsonBody
                 );
 
-                retrofit2.Response<List<Course>> response = call.execute();
+                // 3. Thực thi request đồng bộ (execute) vì đang ở trong background thread
+                Response<List<Course>> response = call.execute();
 
                 if (response.isSuccessful() && response.body() != null) {
                     List<Course> courses = response.body();
+                    // Bước 1: Xóa sạch dữ liệu cũ (Fake data, data cũ...)
+                    mCourseDao.deleteAllCourses();
+                    Log.d("SYNC_COURSE", "Đã xóa cache cũ.");
 
-                    // Lưu vào Local DB (Room)
+                    // Bước 2: Lưu dữ liệu mới sạch sẽ từ Server
                     if (!courses.isEmpty()) {
+                        // Mặc định dữ liệu từ server về là đã sync
+                        for (Course c : courses) {
+                            c.setSynced(true);
+                            c.setDeleted(false);
+                        }
                         mCourseDao.insertCourses(courses);
                     }
-                    Log.d("SYNC_COURSE", "Đã tải về " + courses.size() + " môn học.");
+
+                    Log.d("SYNC_COURSE", "Đã cập nhật " + courses.size() + " lớp học từ Server.");
                 } else {
-                    Log.e("SYNC_COURSE", "Lỗi API: " + response.code() + " - " + (response.errorBody() != null ? response.errorBody().string() : "null"));
+                    Log.e("SYNC_COURSE", "Lỗi API: " + response.code() + " - " + response.message());
+                    if (response.errorBody() != null) {
+                        Log.e("SYNC_COURSE", "Error Body: " + response.errorBody().string());
+                    }
                 }
 
             } catch (Exception e) {
-                Log.e("SYNC_COURSE", "Lỗi Exception: " + e.getMessage());
+                Log.e("SYNC_COURSE", "Lỗi Exception khi sync: " + e.getMessage());
                 e.printStackTrace();
             }
         });
     }
 
-    // Hàm gọi API update trạng thái Task lên Server
+    // Hàm gọi API update trạng thái Task
     public void updateTaskStatusCloud(String taskId, boolean isCompleted) {
         executor.execute(() -> {
             try {
                 Log.d("SYNC", "Đang gửi trạng thái Task " + taskId + " (" + isCompleted + ") lên Cloud...");
-                // Logic update status
+                // Logic update status implementation here...
             } catch (Exception e) {
                 Log.e("SYNC", "Lỗi update cloud: " + e.getMessage());
             }
@@ -150,14 +161,12 @@ public class CourseRepository {
     }
 
     public void getMaterials(String courseId, retrofit2.Callback<List<FileObject>> callback) {
-        // Lưu ý: Token lấy từ mPrefs sẽ tốt hơn mTaskDao.toString()
         String token = "Bearer " + mPrefs.getString("ACCESS_TOKEN", "");
         fetchMaterials(token, courseId, callback);
     }
 
     public void fetchMaterials(String token, String courseId, retrofit2.Callback<List<FileObject>> callback) {
-        // Có thể dùng mSupabaseService đã khởi tạo sẵn thay vì tạo mới
-        com.google.gson.JsonObject body = new com.google.gson.JsonObject();
+        JsonObject body = new JsonObject();
         body.addProperty("prefix", "course_" + courseId);
         body.addProperty("limit", 100);
 
