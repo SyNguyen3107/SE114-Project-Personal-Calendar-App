@@ -19,7 +19,8 @@ public interface TaskDao {
     // --- WRITE ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertTask(Task task);
-
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertTasks(List<Task> tasks);
     @Update
     void updateTask(Task task);
     @Delete
@@ -43,7 +44,7 @@ public interface TaskDao {
     LiveData<Task> getTaskById(String taskId);
 
     // 4. MỚI: Lấy danh sách Task của một Môn học cụ thể
-    @Query("SELECT * FROM task_table WHERE course_id = :courseId AND is_deleted = 0 ORDER BY date ASC")
+    @Query("SELECT * FROM task_table WHERE course_id = :courseId AND is_deleted = 0 ORDER BY date DESC")
     LiveData<List<Task>> getTasksByCourseId(String courseId);
 
     // --- SYNC ---

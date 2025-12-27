@@ -138,7 +138,7 @@ public class TeacherTasksFragment extends Fragment {
         task.setTitle(title);
         task.setTime(deadline);
         task.setDescription(desc);
-        task.setcourseId(courseId); // Chú ý: Entity dùng setcourseId (chữ c thường)
+        task.setCourseId(courseId); // Chú ý: Entity dùng setcourseId (chữ c thường)
         task.setOwnerId(userId);
         task.setPriority(1);
 

@@ -1,109 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/card_course"
+    android:id="@+id/card_course_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="16dp"
     android:layout_marginVertical="8dp"
+    android:clickable="true"
+    android:focusable="true"
+    app:cardBackgroundColor="#1565C0"
     app:cardCornerRadius="16dp"
-    app:cardElevation="4dp"
-    app:strokeWidth="0dp">
+    app:cardElevation="4dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/layout_course_bg"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#2196F3"
         android:padding="16dp">
 
-        <!-- Ảnh đại diện môn học (Placeholder) -->
-        <ImageView
-            android:id="@+id/img_course_icon"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:background="@drawable/bg_white_rounded"
-            android:padding="12dp"
-            android:src="@drawable/ic_launcher_foreground"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/black" />
-
-        <!-- Tên Môn Học -->
         <TextView
             android:id="@+id/tv_course_name"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
             android:layout_marginEnd="8dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="Mathematics"
+            android:text="Java Developing"
             android:textColor="@android:color/white"
-            android:textSize="18sp"
-            app:layout_constraintEnd_toStartOf="@+id/btn_arrow"
-            app:layout_constraintStart_toEndOf="@+id/img_course_icon"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Mô tả / Chương hiện tại -->
         <TextView
-            android:id="@+id/tv_course_desc"
+            android:id="@+id/tv_course_description"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:alpha="0.9"
-            android:text="04/21 • Chapter 5"
+            android:layout_marginTop="8dp"
+            android:text="Chapter 1: Introduction to Java Programming"
             android:textColor="@android:color/white"
             android:textSize="14sp"
-            app:layout_constraintEnd_toEndOf="@+id/tv_course_name"
-            app:layout_constraintStart_toStartOf="@+id/tv_course_name"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tv_course_name" />
 
-        <!-- Icon mũi tên sang phải -->
-        <ImageView
-            android:id="@+id/btn_arrow"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_launcher_foreground"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_course_desc"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/tv_course_name"
-            app:tint="@android:color/white"
-            tools:ignore="ContentDescription" />
-        <!-- Lưu ý: Bạn nên thay src bằng ic_arrow_right hoặc tương tự -->
-
-        <!-- Chip: Giờ học -->
         <TextView
-            android:id="@+id/tv_time_slot"
+            android:id="@+id/tv_course_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:background="@drawable/bg_white_rounded"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp"
-            android:text="05:30 - 06:30"
-            android:textColor="@color/black"
-            android:textSize="12sp"
-            android:textStyle="bold"
+            android:text="11:35 - 13:05"
+            android:textColor="#E0E0E0"
+            android:textSize="14sp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/img_course_icon" />
+            app:layout_constraintTop_toBottomOf="@+id/tv_course_description" />
 
-        <!-- Chip: Tên Giáo viên -->
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/img_teacher_avatar"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginTop="16dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_account_circle"
+            app:shapeAppearanceOverlay="@style/CircleImageStyle"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:tint="@color/white"
+            app:layout_constraintTop_toBottomOf="@+id/tv_course_time" />
+
         <TextView
             android:id="@+id/tv_teacher_name"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
-            android:background="@drawable/bg_white_rounded"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp"
-            android:text="Jason Mayor"
-            android:textColor="@color/black"
-            android:textSize="12sp"
+            android:text="Brooklyn Williamson"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
             android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_time_slot"
-            app:layout_constraintStart_toEndOf="@+id/tv_time_slot"
-            app:layout_constraintTop_toTopOf="@+id/tv_time_slot" />
+            app:layout_constraintBottom_toBottomOf="@+id/img_teacher_avatar"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/img_teacher_avatar"
+            app:layout_constraintTop_toTopOf="@+id/img_teacher_avatar" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 </com.google.android.material.card.MaterialCardView>

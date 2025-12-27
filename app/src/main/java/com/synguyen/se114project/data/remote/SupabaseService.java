@@ -43,6 +43,14 @@ public interface SupabaseService {
             @Header("Authorization") String token,
             @Query("owner_id") String ownerId
     );
+    @GET("rest/v1/tasks")
+    Call<List<Task>> getTasks(
+            @Header("apikey") String apiKey,
+            @Header("Authorization") String token,
+            @Query("course_id") String courseIdQuery, // Ví dụ: "eq.uuid-cua-course"
+            @Query("select") String select, // Thường dùng "*"
+            @Query("order") String order    // Ví dụ: "due_date.asc"
+    );
     // 1. Tìm Profile theo user_code (MSSV)
     @GET("rest/v1/profiles")
     Call<List<Profile>> getProfileByCode(
@@ -156,6 +164,13 @@ public interface SupabaseService {
             @Header("apikey") String apiKey,
             @Header("Authorization") String token,
             @Body JsonObject body // Body sẽ chứa tham số json: {"sid": "uuid..."}
+    );
+
+    @GET("student_course_details")
+    Call<List<Course>> getStudentCourses(
+            @Header("apikey") String apiKey,
+            @Header("Authorization") String token,
+            @Query("student_id") String studentIdQuery // Ví dụ: "eq.UUID"
     );
     // 13. UPLOAD FILE
     @Multipart

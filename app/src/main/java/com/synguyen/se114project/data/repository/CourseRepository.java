@@ -29,6 +29,7 @@ public class CourseRepository {
     private final CourseDao mCourseDao;
     private final SupabaseService mSupabaseService;
     private final SharedPreferences mPrefs;
+    // Executor riêng cho các tác vụ mạng (Network operations)
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private LiveData<List<Course>> mAllCourses;
@@ -45,6 +46,8 @@ public class CourseRepository {
         mAllCourses = mCourseDao.getAllCourses();
     }
 
+    // --- GETTERS ---
+
     public LiveData<List<Course>> getAllCourses() {
         return mAllCourses;
     }
@@ -53,82 +56,87 @@ public class CourseRepository {
         return mCourseDao.getCourseById(id);
     }
 
-    public void insert(Course Course) {
-        AppDatabase.databaseWriteExecutor.execute(() -> mCourseDao.insertCourse(Course));
+    // --- LOCAL DATABASE OPERATIONS (CRUD) ---
+    // Sử dụng databaseWriteExecutor của AppDatabase để đảm bảo thread-safe với Room
+
+    public void insert(Course course) {
+        AppDatabase.databaseWriteExecutor.execute(() -> mCourseDao.insertCourse(course));
     }
 
-    public void insertAll(List<Course> Courses) {
-        AppDatabase.databaseWriteExecutor.execute(() -> mCourseDao.insertCourses(Courses));
+    public void insertAll(List<Course> courses) {
+        AppDatabase.databaseWriteExecutor.execute(() -> mCourseDao.insertCourses(courses));
     }
 
-    public void update(Course Course) {
+    public void update(Course course) {
         AppDatabase.databaseWriteExecutor.execute(() -> {
-            Course.setLastUpdated(System.currentTimeMillis());
-            Course.setSynced(false);
-            mCourseDao.updateCourse(Course);
+            course.setLastUpdated(System.currentTimeMillis());
+            course.setSynced(false); // Đánh dấu chưa đồng bộ nếu sửa local
+            mCourseDao.updateCourse(course);
         });
     }
 
-    public void delete(Course Course) {
+    public void delete(Course course) {
         AppDatabase.databaseWriteExecutor.execute(() -> {
-            mCourseDao.softDeleteCourse(Course.getId(), System.currentTimeMillis());
+            // Soft delete: Chỉ đánh dấu đã xóa và cập nhật thời gian
+            mCourseDao.softDeleteCourse(course.getId(), System.currentTimeMillis());
         });
     }
 
-    // Hàm Sync chung (nếu cần mở rộng sau này)
-    public void sync() {
+    // --- REMOTE OPERATIONS (SYNC & API) ---
+
+    /**
+     * Đồng bộ danh sách khóa học của sinh viên từ Server về Local.
+     * @param studentId ID của sinh viên cần lấy danh sách lớp.
+     */
+    public void syncStudentCourses(String studentId) {
         executor.execute(() -> {
             try {
-                Log.d("SYNC", "Bắt đầu đồng bộ dữ liệu...");
-            } catch (Exception e) {
-                Log.e("SYNC", "Lỗi khi đồng bộ: " + e.getMessage());
-            }
-        });
-    }
-
-    // =========================================================================
-    // [UPDATE QUAN TRỌNG] Hàm Sync Student Courses dùng RPC
-    // =========================================================================
-    public void syncStudentCourses() {
-        executor.execute(() -> {
-            try {
-                String userId = mPrefs.getString("USER_ID", "");
+                // 1. Lấy Token xác thực (vẫn lấy từ Prefs vì nó thuộc về session đăng nhập)
                 String token = mPrefs.getString("ACCESS_TOKEN", "");
                 String authHeader = "Bearer " + token;
 
-                if (userId.isEmpty()) {
-                    Log.e("SYNC_COURSE", "User ID trống, không thể đồng bộ.");
+                // Kiểm tra điều kiện đầu vào
+                if (studentId == null || studentId.isEmpty()) {
+                    Log.e("SYNC_COURSE", "Student ID truyền vào bị trống, hủy đồng bộ.");
                     return;
                 }
 
-                Log.d("SYNC_COURSE", "Bắt đầu gọi RPC lấy lớp cho User: " + userId);
+                if (token.isEmpty()) {
+                    Log.e("SYNC_COURSE", "Token trống (chưa đăng nhập?), hủy đồng bộ.");
+                    return;
+                }
 
-                // 1. Tạo Body JSON chứa tham số 'sid'
+                Log.d("SYNC_COURSE", "Bắt đầu gọi RPC lấy lớp cho User: " + studentId);
+
+                // 2. Tạo Body JSON chứa tham số 'sid'
                 JsonObject jsonBody = new JsonObject();
-                jsonBody.addProperty("sid", userId);
+                jsonBody.addProperty("sid", studentId);
 
-                // 2. Gọi hàm RPC từ SupabaseService (đã cập nhật dùng POST & JsonObject)
+                // 3. Gọi hàm RPC từ SupabaseService
                 Call<List<Course>> call = mSupabaseService.getStudentCoursesRPC(
                         BuildConfig.SUPABASE_KEY,
                         authHeader,
                         jsonBody
                 );
 
-                // 3. Thực thi request đồng bộ (execute) vì đang ở trong background thread
+                // 4. Thực thi request (Synchronous vì đang ở background thread)
                 Response<List<Course>> response = call.execute();
 
                 if (response.isSuccessful() && response.body() != null) {
                     List<Course> courses = response.body();
-                    // Bước 1: Xóa sạch dữ liệu cũ (Fake data, data cũ...)
+
+                    // --- XỬ LÝ DATABASE LOCAL ---
+                    // Bước 1: Xóa sạch dữ liệu cũ để tránh trùng lặp hoặc dữ liệu rác
+                    // Lưu ý: Nếu muốn hỗ trợ offline tốt hơn hoặc nhiều user, logic này cần tinh chỉnh.
                     mCourseDao.deleteAllCourses();
                     Log.d("SYNC_COURSE", "Đã xóa cache cũ.");
 
                     // Bước 2: Lưu dữ liệu mới sạch sẽ từ Server
                     if (!courses.isEmpty()) {
-                        // Mặc định dữ liệu từ server về là đã sync
                         for (Course c : courses) {
-                            c.setSynced(true);
+                            c.setSynced(true); // Data từ server về mặc định là đã sync
                             c.setDeleted(false);
+                            // c.setStudentId(studentId); // Nếu entity có trường này thì set ở đây
                         }
                         mCourseDao.insertCourses(courses);
                     }
@@ -148,7 +156,18 @@ public class CourseRepository {
         });
     }
 
-    // Hàm gọi API update trạng thái Task
+    // Hàm Sync chung (Placeholder nếu cần mở rộng)
+    public void sync() {
+        executor.execute(() -> {
+            try {
+                Log.d("SYNC", "Hàm sync chung được gọi (chưa implement logic cụ thể).");
+            } catch (Exception e) {
+                Log.e("SYNC", "Lỗi khi đồng bộ: " + e.getMessage());
+            }
+        });
+    }
+
+    // Hàm gọi API update trạng thái Task (Placeholder)
     public void updateTaskStatusCloud(String taskId, boolean isCompleted) {
         executor.execute(() -> {
             try {
@@ -160,6 +179,8 @@ public class CourseRepository {
         });
     }
 
+    // --- FILE/MATERIAL OPERATIONS ---
+
     public void getMaterials(String courseId, retrofit2.Callback<List<FileObject>> callback) {
         String token = "Bearer " + mPrefs.getString("ACCESS_TOKEN", "");
         fetchMaterials(token, courseId, callback);
@@ -167,6 +188,7 @@ public class CourseRepository {
 
     public void fetchMaterials(String token, String courseId, retrofit2.Callback<List<FileObject>> callback) {
         JsonObject body = new JsonObject();
+        // Giả định bucket structure là course_{id} hoặc folder prefix
         body.addProperty("prefix", "course_" + courseId);
         body.addProperty("limit", 100);
 

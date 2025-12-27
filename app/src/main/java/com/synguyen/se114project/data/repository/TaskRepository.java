@@ -6,16 +6,20 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
+
 import com.synguyen.se114project.BuildConfig;
-import com.synguyen.se114project.data.remote.RetrofitClient;
 import com.synguyen.se114project.data.dao.TaskDao;
 import com.synguyen.se114project.data.database.AppDatabase;
 import com.synguyen.se114project.data.entity.Subtask;
 import com.synguyen.se114project.data.entity.Task;
+import com.synguyen.se114project.data.remote.RetrofitClient;
 import com.synguyen.se114project.data.remote.SupabaseService;
 
 import java.util.Calendar;
 import java.util.List;
+// [THÊM MỚI]: Import Executor
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import retrofit2.Call;
 import retrofit2.Response;
@@ -23,15 +27,17 @@ import retrofit2.Response;
 public class TaskRepository {
 
     private final TaskDao mTaskDao;
-    private final AppDatabase mDatabase; // [THÊM MỚI]: Khai báo biến Database để dùng cho Transaction
+    private final AppDatabase mDatabase;
     private final LiveData<List<Task>> mAllTasks;
     private final SupabaseService mSupabaseService;
     private final SharedPreferences mPrefs;
     private static final String SUPABASE_URL = BuildConfig.SUPABASE_URL;
     private static final String SUPABASE_KEY = BuildConfig.SUPABASE_KEY;
 
+    // [THÊM MỚI]: Khai báo Executor để chạy tác vụ background (API, Sync)
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
     public TaskRepository(Application application) {
-        // [SỬA ĐOẠN NÀY]: Gán vào biến toàn cục mDatabase thay vì biến cục bộ 'db'
         mDatabase = AppDatabase.getDatabase(application);
         mTaskDao = mDatabase.taskDao();
 
@@ -53,7 +59,6 @@ public class TaskRepository {
     public LiveData<List<Task>> getTasksByDate(long dateTimestamp) {
         long start = getStartOfDay(dateTimestamp);
         long end = getEndOfDay(dateTimestamp);
-
         return mTaskDao.getTasksByDateRange(start, end);
     }
 
@@ -67,16 +72,13 @@ public class TaskRepository {
         AppDatabase.databaseWriteExecutor.execute(() -> {
             String userId = mPrefs.getString("USER_ID", "");
             task.setOwnerId(userId);
-
             task.setSynced(false);
             mTaskDao.insertTask(task);
 
             String token = "Bearer " + mPrefs.getString("ACCESS_TOKEN", "");
-
             try {
                 Call<List<Task>> call = mSupabaseService.createTask(SUPABASE_KEY, token, task);
                 Response<List<Task>> response = call.execute();
-
                 if (response.isSuccessful()) {
                     task.setSynced(true);
                     mTaskDao.updateTask(task);
@@ -123,7 +125,6 @@ public class TaskRepository {
                 String queryId = "eq." + task.getId();
                 Call<Void> call = mSupabaseService.deleteTask(SUPABASE_KEY, token, queryId);
                 Response<Void> response = call.execute();
-
                 if (response.isSuccessful()) {
                     mTaskDao.deletePhysicalTask(task);
                 }
@@ -133,14 +134,10 @@ public class TaskRepository {
         });
     }
 
-    // [QUAN TRỌNG]: Hàm này giờ đã hoạt động vì có mDatabase
     public void insertTaskWithSubtasks(Task task, List<Subtask> subtasks) {
         AppDatabase.databaseWriteExecutor.execute(() -> {
             mDatabase.runInTransaction(() -> {
-                // 1. Lưu Task cha trước
                 mTaskDao.insertTask(task);
-
-                // 2. Gán ID và lưu Subtask con
                 if (subtasks != null && !subtasks.isEmpty()) {
                     for (Subtask sub : subtasks) {
                         sub.setTaskId(task.getId());
@@ -195,5 +192,50 @@ public class TaskRepository {
         calendar.set(Calendar.SECOND, 59);
         calendar.set(Calendar.MILLISECOND, 999);
         return calendar.getTimeInMillis();
+    }
+    public void refreshCourseTasks(String courseId) {
+        executor.execute(() -> {
+            try {
+                String token = mPrefs.getString("ACCESS_TOKEN", "");
+                if (token.isEmpty()) return;
+
+                // Query filter: "eq." + courseId
+                String query = "eq." + courseId;
+
+                Log.d("SYNC_TASK", "Bắt đầu tải task cho course: " + courseId);
+
+                Call<List<Task>> call = mSupabaseService.getTasks(
+                        SUPABASE_KEY,     // Sửa lại dùng hằng số SUPABASE_KEY
+                        "Bearer " + token,
+                        query,
+                        "*",
+                        "id.desc"
+                );
+
+                Response<List<Task>> response = call.execute();
+
+                if (response.isSuccessful() && response.body() != null) {
+                    List<Task> tasks = response.body();
+
+                    if (!tasks.isEmpty()) {
+                        for (Task t : tasks) {
+                            t.setSynced(true);
+                            // Nếu API không trả về course_id, ta gán thủ công để chắc chắn
+                            if (t.getCourseId() == null || t.getCourseId().isEmpty()) {
+                                t.setCourseId(courseId);
+                            }
+                        }
+                        // Gọi hàm insertTasks vừa thêm vào TaskDao
+                        mTaskDao.insertTasks(tasks);
+                    }
+                    Log.d("SYNC_TASK", "Đã tải " + tasks.size() + " task cho khóa " + courseId);
+                } else {
+                    Log.e("SYNC_TASK", "Lỗi API: " + response.code());
+                }
+            } catch (Exception e) {
+                Log.e("SYNC_TASK", "Lỗi Exception: " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
     }
 }

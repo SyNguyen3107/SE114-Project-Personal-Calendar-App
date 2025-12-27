@@ -1,135 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5"
-    android:fillViewport="true">
+    android:orientation="vertical"
+    android:background="#F5F5F5">
 
-    <LinearLayout
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbarCourseDetail"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/white"
+        android:elevation="4dp"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:titleTextColor="@color/black" />
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayoutCourse"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:background="@color/white"
+        app:tabMode="fixed"
+        app:tabSelectedTextColor="@color/holo_blue_dark"
+        app:tabTextColor="@color/gray" />
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPagerCourse"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/layout_detail_header"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="#2196F3"
-            android:padding="24dp"
-            android:paddingBottom="50dp"> <ImageView
-            android:id="@+id/btn_back"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/back"
-            app:tint="@android:color/white"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/tv_detail_course_name"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Mathematics"
-                android:textColor="@android:color/white"
-                android:textSize="28sp"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/btn_back" />
-
-            <TextView
-                android:id="@+id/tv_detail_teacher"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/bg_white_rounded"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="4dp"
-                android:text="Jason Mayor"
-                android:textColor="#000000"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tv_detail_course_name" />
-
-            <TextView
-                android:id="@+id/tv_detail_time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_white_rounded"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="4dp"
-                android:text="05:30 - 06:30"
-                android:textColor="#000000"
-                android:textStyle="bold"
-                app:layout_constraintStart_toEndOf="@+id/tv_detail_teacher"
-                app:layout_constraintTop_toTopOf="@+id/tv_detail_teacher" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="-30dp"
-            android:background="@drawable/bg_white_rounded"
-            android:orientation="vertical"
-            android:paddingTop="24dp"
-            android:paddingBottom="40dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Assignments and Tasks"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="#000000"
-                android:layout_marginStart="20dp"
-                android:layout_marginBottom="12dp"/>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_class_tasks"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                tools:listitem="@layout/item_task"
-                android:layout_marginBottom="24dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Course Materials"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="#000000"
-                android:layout_marginStart="20dp"
-                android:layout_marginBottom="12dp"/>
-
-            <ProgressBar
-                android:id="@+id/pb_materials"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:visibility="gone"/>
-
-            <TextView
-                android:id="@+id/tv_no_materials"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="No materials uploaded"
-                android:gravity="center"
-                android:visibility="gone"
-                android:padding="16dp"
-                android:textColor="@android:color/darker_gray"/>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_materials"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                tools:listitem="@layout/item_material"/>
-
-        </LinearLayout>
-    </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+</LinearLayout>

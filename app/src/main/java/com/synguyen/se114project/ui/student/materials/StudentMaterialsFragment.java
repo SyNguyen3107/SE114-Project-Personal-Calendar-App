@@ -67,11 +67,11 @@ public class StudentMaterialsFragment extends Fragment {
         loadMaterials();
     }
     private void setupRecyclerView() {
-        rcvMaterials.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new MaterialAdapter(file -> {
-            openFileInBrowser(file.getName());
-        });
-        rcvMaterials.setAdapter(adapter);
+//        rcvMaterials.setLayoutManager(new LinearLayoutManager(getContext()));
+//        adapter = new MaterialAdapter(file -> {
+//            openFileInBrowser(file.getName());
+//        });
+//        rcvMaterials.setAdapter(adapter);
     }
 
     private void loadMaterials() {
@@ -87,32 +87,32 @@ public class StudentMaterialsFragment extends Fragment {
         JsonObject body = new JsonObject();
         body.addProperty("prefix", ""); // "" nghĩa là lấy tất cả file trong bucket (hoặc "course_id/" nếu chia thư mục)
 
-        service.listFiles(BuildConfig.SUPABASE_KEY, "Bearer " + token, BUCKET_NAME, body)
-                .enqueue(new Callback<List<FileObject>>() {
-                    @Override
-                    public void onResponse(Call<List<FileObject>> call, Response<List<FileObject>> response) {
-                        progressBar.setVisibility(View.GONE);
-                        if (response.isSuccessful() && response.body() != null) {
-                            List<FileObject> files = response.body();
-
-                            // Lọc bỏ các object là Folder (thường size = 0 hoặc name kết thúc bằng /)
-                            // Ở đây hiển thị hết
-                            if (files.isEmpty()) {
-                                tvEmpty.setVisibility(View.VISIBLE);
-                            } else {
-                                adapter.setFiles(files);
-                            }
-                        } else {
-                            Toast.makeText(getContext(), "Không tải được tài liệu", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Call<List<FileObject>> call, Throwable t) {
-                        progressBar.setVisibility(View.GONE);
-                        Toast.makeText(getContext(), "Lỗi mạng", Toast.LENGTH_SHORT).show();
-                    }
-                });
+//        service.listFiles(BuildConfig.SUPABASE_KEY, "Bearer " + token, BUCKET_NAME, body)
+//                .enqueue(new Callback<List<FileObject>>() {
+//                    @Override
+//                    public void onResponse(Call<List<FileObject>> call, Response<List<FileObject>> response) {
+//                        progressBar.setVisibility(View.GONE);
+//                        if (response.isSuccessful() && response.body() != null) {
+//                            List<FileObject> files = response.body();
+//
+//                            // Lọc bỏ các object là Folder (thường size = 0 hoặc name kết thúc bằng /)
+//                            // Ở đây hiển thị hết
+//                            if (files.isEmpty()) {
+//                                tvEmpty.setVisibility(View.VISIBLE);
+//                            } else {
+//                                adapter.setFiles(files);
+//                            }
+//                        } else {
+//                            Toast.makeText(getContext(), "Không tải được tài liệu", Toast.LENGTH_SHORT).show();
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void onFailure(Call<List<FileObject>> call, Throwable t) {
+//                        progressBar.setVisibility(View.GONE);
+//                        Toast.makeText(getContext(), "Lỗi mạng", Toast.LENGTH_SHORT).show();
+//                    }
+//                });
     }
 
     private void openFileInBrowser(String fileName) {

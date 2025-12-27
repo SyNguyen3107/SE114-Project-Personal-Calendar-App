@@ -38,15 +38,6 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Avatar User (Placeholder) -->
-        <ImageView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_launcher_foreground"
-            android:background="@drawable/bg_circle_priority"
-            app:tint="@color/black"
-            xmlns:app="http://schemas.android.com/apk/res-auto"/>
-
     </LinearLayout>
 
     <!-- Danh sách Môn học -->

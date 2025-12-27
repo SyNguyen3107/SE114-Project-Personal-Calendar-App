@@ -66,7 +66,7 @@ public class SubmissionAdapter extends RecyclerView.Adapter<SubmissionAdapter.Su
             tvStudentId = itemView.findViewById(R.id.tvStudentId);
             tvTime = itemView.findViewById(R.id.tvSubmissionTime);
             tvFileName = itemView.findViewById(R.id.tvFileName);
-            imgIcon = itemView.findViewById(R.id.imgFileIcon);
+//            imgIcon = itemView.findViewById(R.id.imgFileIcon);
         }
 
         public void bind(FileObject file) {

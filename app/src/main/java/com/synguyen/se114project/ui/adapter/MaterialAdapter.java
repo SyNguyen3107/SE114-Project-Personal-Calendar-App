@@ -3,61 +3,71 @@ package com.synguyen.se114project.ui.adapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.synguyen.se114project.R;
-import com.synguyen.se114project.data.remote.response.FileObject;
+import com.synguyen.se114project.data.remote.response.FileObject; // Model này bạn đã có
 import java.util.ArrayList;
 import java.util.List;
 
-public class MaterialAdapter extends RecyclerView.Adapter<MaterialAdapter.ViewHolder> {
+public class MaterialAdapter extends RecyclerView.Adapter<MaterialAdapter.MaterialViewHolder> {
 
-    private List<FileObject> fileList = new ArrayList<>();
-    private final OnItemClickListener listener;
+    private List<FileObject> mList = new ArrayList<>();
+    private OnItemClickListener mListener;
 
     public interface OnItemClickListener {
-        void onItemClick(FileObject file);
+        void onDownloadClick(FileObject file);
     }
 
-    public MaterialAdapter(OnItemClickListener listener) {
-        this.listener = listener;
-    }
-
-    public void setFiles(List<FileObject> files) {
-        this.fileList = files;
+    public void setList(List<FileObject> list) {
+        this.mList = list;
         notifyDataSetChanged();
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.mListener = listener;
     }
 
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public MaterialViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_material, parent, false);
-        return new ViewHolder(view);
+        return new MaterialViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        FileObject file = fileList.get(position);
-        holder.tvName.setText(file.getName());
-        holder.tvSize.setText(file.getSize());
-
-        holder.itemView.setOnClickListener(v -> listener.onItemClick(file));
+    public void onBindViewHolder(@NonNull MaterialViewHolder holder, int position) {
+        FileObject file = mList.get(position);
+        holder.bind(file);
     }
 
     @Override
-    public int getItemCount() { return fileList.size(); }
+    public int getItemCount() {
+        return mList != null ? mList.size() : 0;
+    }
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
+    class MaterialViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvSize;
-        ImageView imgIcon;
+        View btnDownload;
 
-        ViewHolder(View itemView) {
+        public MaterialViewHolder(@NonNull View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tvFileName);
             tvSize = itemView.findViewById(R.id.tvFileSize);
-            imgIcon = itemView.findViewById(R.id.imgFileIcon);
+            btnDownload = itemView.findViewById(R.id.btnDownload);
+        }
+
+        public void bind(FileObject file) {
+            tvName.setText(file.getName());
+
+            // Format ngày tháng hoặc size nếu có (tạm thời để cứng hoặc lấy từ API nếu có field created_at)
+            // String meta = "Size: " + file.getMetadata().getSize();
+            tvSize.setText("Tài liệu khóa học");
+
+            btnDownload.setOnClickListener(v -> {
+                if (mListener != null) mListener.onDownloadClick(file);
+            });
         }
     }
 }

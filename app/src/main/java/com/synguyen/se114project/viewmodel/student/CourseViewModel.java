@@ -16,6 +16,10 @@ public class CourseViewModel extends AndroidViewModel {
 
     private final CourseRepository mRepository;
     private final LiveData<List<Course>> mAllCourses;
+    private final androidx.lifecycle.MutableLiveData<List<com.synguyen.se114project.data.remote.response.FileObject>> mMaterials = new androidx.lifecycle.MutableLiveData<>();
+    public LiveData<List<com.synguyen.se114project.data.remote.response.FileObject>> getMaterials() {
+        return mMaterials;
+    }
 
     public CourseViewModel(@NonNull Application application) {
         super(application);
@@ -27,8 +31,31 @@ public class CourseViewModel extends AndroidViewModel {
     public LiveData<List<Course>> getAllCourses() {
         return mAllCourses;
     }
-    public void refreshStudentCourses() {
-        // Gọi hàm syncStudentCourses() mà chúng ta đã viết ở bước trước trong Repository
-        mRepository.syncStudentCourses();
+    public void refreshStudentCourses(String studentId) {
+        if (studentId == null || studentId.isEmpty()) {
+            return; // Kiểm tra an toàn
+        }
+        // Truyền studentId xuống Repository
+        mRepository.syncStudentCourses(studentId);
+    }
+    // Hàm load materials
+    public void loadMaterials(String courseId) {
+        // Gọi hàm bên Repository (bạn đã có hàm này trong code cũ rồi)
+        mRepository.getMaterials(courseId, new retrofit2.Callback<List<com.synguyen.se114project.data.remote.response.FileObject>>() {
+            @Override
+            public void onResponse(retrofit2.Call<List<com.synguyen.se114project.data.remote.response.FileObject>> call, retrofit2.Response<List<com.synguyen.se114project.data.remote.response.FileObject>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    mMaterials.postValue(response.body());
+                } else {
+                    mMaterials.postValue(new ArrayList<>()); // Trả về rỗng nếu lỗi
+                }
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<List<com.synguyen.se114project.data.remote.response.FileObject>> call, Throwable t) {
+                mMaterials.postValue(new ArrayList<>());
+                t.printStackTrace();
+            }
+        });
     }
 }
