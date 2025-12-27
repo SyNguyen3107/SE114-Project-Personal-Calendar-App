@@ -20,7 +20,7 @@ import com.synguyen.se114project.R;
 import com.synguyen.se114project.ui.adapter.CourseAdapter;
 import com.synguyen.se114project.viewmodel.student.CourseViewModel;
 
-public class CourseFragment extends Fragment {
+public class StudentCourseFragment extends Fragment {
 
     private CourseViewModel mViewModel;
     private RecyclerView rvCourse;
@@ -30,7 +30,7 @@ public class CourseFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_course, container, false);
+        return inflater.inflate(R.layout.fragment_student_course, container, false);
     }
 
     @Override
@@ -51,7 +51,7 @@ public class CourseFragment extends Fragment {
 
             NavController navController = Navigation.findNavController(view);
             try {
-                navController.navigate(R.id.action_courseFragment_to_courseDetailFragment, bundle);
+                navController.navigate(R.id.action_studentCourseFragment_to_studentCourseDetailFragment, bundle);
             } catch (Exception e) {
                 Toast.makeText(getContext(), "Chưa tạo màn hình chi tiết!", Toast.LENGTH_SHORT).show();
             }

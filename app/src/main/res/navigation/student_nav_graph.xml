@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/studentHomeFragment">
+
+    <fragment
+        android:id="@+id/studentHomeFragment"
+        android:name="com.synguyen.se114project.ui.student.home.StudentHomeFragment"
+        android:label="Student Home"
+        tools:layout="@layout/fragment_student_home">
+        <action
+            android:id="@+id/action_studentHomeFragment_to_studentTaskAddEditFragment"
+            app:destination="@id/studentTaskAddEditFragment" />
+        <action
+            android:id="@+id/action_studentHomeFragment_to_studentTaskDetailFragment"
+            app:destination="@id/studentTaskDetailFragment" />
+        <action
+            android:id="@+id/action_studentHomeFragment_to_studentScheduleFragment"
+            app:destination="@id/studentScheduleFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/studentCourseFragment"
+        android:name="com.synguyen.se114project.ui.student.course.StudentCourseFragment"
+        android:label="Courses"
+        tools:layout="@layout/fragment_student_course">
+        <action
+            android:id="@+id/action_studentCourseFragment_to_studentCourseDetailFragment"
+            app:destination="@id/studentCourseDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/studentTaskDetailFragment"
+        android:name="com.synguyen.se114project.ui.student.taskdetail.StudentTaskDetailFragment"
+        android:label="Student Task Detail"
+        tools:layout="@layout/fragment_student_task_detail">
+        <argument
+            android:name="taskId"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+        <action
+            android:id="@+id/action_studentTaskDetailFragment_to_studentTaskAddEditFragment"
+            app:destination="@id/studentTaskAddEditFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/studentTaskAddEditFragment"
+        android:name="com.synguyen.se114project.ui.student.taskaddedit.StudentTaskAddEditFragment"
+        android:label="Add/Edit Task"
+        tools:layout="@layout/fragment_student_task_add_edit">
+        <argument
+            android:name="taskId"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/studentCourseDetailFragment"
+        android:name="com.synguyen.se114project.ui.student.coursedetail.StudentCourseDetailFragment"
+        android:label="Student Course Detail"
+        tools:layout="@layout/fragment_student_course_detail">
+        <argument
+            android:name="classId"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_studentCourseDetailFragment_to_studentTaskDetailFragment"
+            app:destination="@id/studentTaskDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/studentScheduleFragment"
+        android:name="com.synguyen.se114project.ui.student.schedule.StudentScheduleFragment"
+        android:label="Schedule"
+        tools:layout="@layout/fragment_student_schedule">
+        <action
+            android:id="@+id/action_studentScheduleFragment_to_studentTaskDetailFragment"
+            app:destination="@id/studentTaskDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.synguyen.se114project.ui.common.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile" />
+
+    <fragment
+        android:id="@+id/communityFragment"
+        android:name="com.synguyen.se114project.ui.common.CommunityFragment"
+        android:label="Community"
+        tools:layout="@layout/fragment_community">
+        <action
+            android:id="@+id/action_community_to_profile"
+            app:destination="@id/profileFragment" />
+    </fragment>
+</navigation>

@@ -23,7 +23,7 @@ import com.synguyen.se114project.data.remote.RetrofitClient;
 import com.synguyen.se114project.data.remote.SupabaseService;
 import com.synguyen.se114project.data.remote.response.AuthResponse;
 import com.synguyen.se114project.data.repository.AuthRepository;
-import com.synguyen.se114project.ui.student.MainActivity;
+import com.synguyen.se114project.ui.student.main.StudentMainActivity;
 import com.synguyen.se114project.ui.teacher.main.TeacherMainActivity;
 
 import java.util.List;
@@ -161,7 +161,7 @@ public class LoginActivity extends AppCompatActivity {
             intent = new Intent(LoginActivity.this, TeacherMainActivity.class);
         } else {
             Toast.makeText(this, "Xin chào Sinh viên!", Toast.LENGTH_SHORT).show();
-            intent = new Intent(LoginActivity.this, MainActivity.class);
+            intent = new Intent(LoginActivity.this, StudentMainActivity.class);
         }
 
         // Cờ này giúp xóa LoginActivity khỏi stack, bấm Back sẽ thoát app chứ ko về login

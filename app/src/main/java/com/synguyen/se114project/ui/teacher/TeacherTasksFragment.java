@@ -66,7 +66,7 @@ public class TeacherTasksFragment extends Fragment {
             Intent intent = new Intent(getContext(), TeacherTaskDetailFragment.class);
             intent.putExtra("TASK_ID", task.getId());
             intent.putExtra("TASK_TITLE", task.getTitle());
-            intent.putExtra("TASK_DESC", task.getSubTitle());
+            intent.putExtra("TASK_DESC", task.getDescription());
             intent.putExtra("TASK_DEADLINE", task.getTime());
             startActivity(intent);
         });
@@ -137,7 +137,7 @@ public class TeacherTasksFragment extends Fragment {
         Task task = new Task();
         task.setTitle(title);
         task.setTime(deadline);
-        task.setSubTitle(desc);
+        task.setDescription(desc);
         task.setcourseId(courseId); // Chú ý: Entity dùng setcourseId (chữ c thường)
         task.setOwnerId(userId);
         task.setPriority(1);

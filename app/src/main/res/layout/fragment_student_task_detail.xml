@@ -352,8 +352,10 @@
                     android:id="@+id/tvTaskDescription"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="3"
                     android:lineSpacingExtra="4dp"
-                    android:text="The key goal of this portion of the project is to ideate for possible solutions. Begin by generating needs statements..."
+                    android:text="This is the example description."
                     android:textColor="#757575"
                     android:textSize="14sp" />
 
@@ -389,21 +391,21 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- Tiêu đề lịch (Optional - giống thiết kế) -->
-                <TextView
+                <Button
+                    android:id="@+id/btnDeleteTask"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Schedule"
-                    android:gravity="center"
-                    android:textStyle="bold"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginBottom="40dp"
+                    android:text="Delete this task"
                     android:textSize="16sp"
-                    android:textColor="@color/black"
-                    android:layout_marginBottom="8dp"/>
-
-                <CalendarView
-                    android:id="@+id/calendarView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:textStyle="bold"
+                    android:textColor="@color/white"
+                    android:backgroundTint="#D32F2F"
+                    android:textAllCaps="false"
+                    app:cornerRadius="12dp"
+                    app:iconGravity="textStart"
+                    app:iconTint="@color/white"/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

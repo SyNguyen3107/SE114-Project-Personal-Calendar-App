@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-public class ScheduleFragment extends Fragment {
+public class StudentScheduleFragment extends Fragment {
 
     // 1. Thay MainViewModel bằng ScheduleViewModel
     private ScheduleViewModel mViewModel;
@@ -39,7 +39,7 @@ public class ScheduleFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_schedule, container, false);
+        return inflater.inflate(R.layout.fragment_student_schedule, container, false);
     }
 
     @Override
@@ -65,7 +65,7 @@ public class ScheduleFragment extends Fragment {
 
             NavController navController = Navigation.findNavController(view);
             try {
-                navController.navigate(R.id.action_scheduleFragment_to_taskDetailFragment, bundle);
+                navController.navigate(R.id.action_studentScheduleFragment_to_studentTaskDetailFragment, bundle);
             } catch (Exception e) {
                 Toast.makeText(getContext(), "Lỗi chuyển trang: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }

@@ -2,19 +2,95 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/teacher_nav_graph"
-    app:startDestination="@id/teacherScheduleFragment">
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/teacherHomeFragment">
+
+    <fragment
+        android:id="@+id/teacherHomeFragment"
+        android:name="com.synguyen.se114project.ui.teacher.home.TeacherHomeFragment"
+        android:label="teacher Home"
+        tools:layout="@layout/fragment_teacher_home">
+        <action
+            android:id="@+id/action_teacherHomeFragment_to_teacherTaskAddEditFragment"
+            app:destination="@id/teacherTaskAddEditFragment" />
+        <action
+            android:id="@+id/action_teacherHomeFragment_to_teacherTaskDetailFragment"
+            app:destination="@id/teacherTaskDetailFragment" />
+        <action
+            android:id="@+id/action_teacherHomeFragment_to_teacherScheduleFragment"
+            app:destination="@id/teacherScheduleFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/teacherCourseFragment"
+        android:name="com.synguyen.se114project.ui.teacher.course.TeacherCourseFragment"
+        android:label="Courses"
+        tools:layout="@layout/fragment_teacher_course">
+        <action
+            android:id="@+id/action_teacherCourseFragment_to_teacherCourseDetailFragment"
+            app:destination="@id/teacherCourseDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/teacherTaskDetailFragment"
+        android:name="com.synguyen.se114project.ui.teacher.taskdetail.TeacherTaskDetailFragment"
+        android:label="teacher Task Detail"
+        tools:layout="@layout/fragment_teacher_task_detail">
+        <argument
+            android:name="taskId"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+        <argument
+            android:name="taskTitle"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+        <action
+            android:id="@+id/action_teacherTaskDetailFragment_to_teacherTaskAddEditFragment"
+            app:destination="@id/teacherTaskAddEditFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/teacherTaskAddEditFragment"
+        android:name="com.synguyen.se114project.ui.teacher.taskaddedit.TeacherTaskAddEditFragment"
+        android:label="Add/Edit Task"
+        tools:layout="@layout/fragment_teacher_task_add_edit">
+        <argument
+            android:name="taskId"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/teacherCourseDetailFragment"
+        android:name="com.synguyen.se114project.ui.teacher.coursedetail.TeacherCourseDetailFragment"
+        android:label="teacher Course Detail"
+        tools:layout="@layout/fragment_teacher_course_detail">
+        <argument
+            android:name="classId"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_teacherCourseDetailFragment_to_teacherTaskDetailFragment"
+            app:destination="@id/teacherTaskDetailFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/teacherScheduleFragment"
         android:name="com.synguyen.se114project.ui.teacher.schedule.TeacherScheduleFragment"
         android:label="Schedule"
-        tools:layout="@layout/fragment_teacher_schedule" />
+        tools:layout="@layout/fragment_teacher_schedule">
+        <action
+            android:id="@+id/action_teacherScheduleFragment_to_teacherTaskDetailFragment"
+            app:destination="@id/teacherTaskDetailFragment" />
+    </fragment>
+
     <fragment
-        android:id="@+id/teacherCourseFragment"
-        android:name="com.synguyen.se114project.ui.teacher.course.TeacherCourseFragment"
-        android:label="Courses"
-        tools:layout="@layout/fragment_teacher_course" />
+        android:id="@+id/profileFragment"
+        android:name="com.synguyen.se114project.ui.common.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile" />
 
     <fragment
         android:id="@+id/communityFragment"
@@ -25,11 +101,4 @@
             android:id="@+id/action_community_to_profile"
             app:destination="@id/profileFragment" />
     </fragment>
-
-    <fragment
-        android:id="@+id/profileFragment"
-        android:name="com.synguyen.se114project.ui.student.profile.ProfileFragment"
-        android:label="Profile"
-        tools:layout="@layout/fragment_profile" />
-
 </navigation>

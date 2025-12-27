@@ -34,9 +34,9 @@ public class Task {
     @SerializedName("tag")
     public String tag;
 
-    @ColumnInfo(name = "subtitle")
-    @SerializedName("subtitle")
-    public String subtitle;
+    @ColumnInfo(name = "description")      // Tên cột trong Room (SQLite)
+    @SerializedName("description")         // Tên key trong JSON từ Supabase trả về
+    public String description;
 
     @ColumnInfo(name = "time")
     @SerializedName("time")
@@ -87,10 +87,10 @@ public class Task {
     }
 
     @Ignore
-    public Task(String title, String subtitle, long date, String time, String tag, int priority) {
+    public Task(String title, String description, long date, String time, String tag, int priority) {
         this.id = UUID.randomUUID().toString();
         this.title = title;
-        this.subtitle = subtitle;
+        this.description = description;
         this.date = date;
         this.time = time;
         this.tag = tag;
@@ -120,8 +120,8 @@ public class Task {
     public int getPriority() { return priority; }
     public void setPriority(int priority) { this.priority = priority; }
 
-    public String getSubTitle() { return subtitle; }
-    public void setSubTitle(String subtitle) { this.subtitle = subtitle; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
     public String getTime() { return time; }
     public void setTime(String time) { this.time = time; }

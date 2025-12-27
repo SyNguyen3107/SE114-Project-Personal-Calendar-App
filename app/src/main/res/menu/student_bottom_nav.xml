@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/homeFragment"
+        android:id="@+id/studentHomeFragment"
         android:icon="@drawable/home"
         android:title="Home" />
 
     <item
-        android:id="@+id/courseFragment"
+        android:id="@+id/studentCourseFragment"
         android:icon="@drawable/learning"
         android:title="Courses" />
 
     <item
-        android:id="@+id/profileFragment"
+        android:id="@+id/communityFragment"
         android:icon="@drawable/user"
-        android:title="Profile" />
+        android:title="Community" />
 </menu>

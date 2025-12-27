@@ -69,7 +69,7 @@ public class TeacherTaskAdapter extends RecyclerView.Adapter<TeacherTaskAdapter.
 
         public void bind(Task task) {
             tvTitle.setText(task.getTitle());
-            tvSubtitle.setText(task.getSubTitle() != null ? task.getSubTitle() : "");
+            tvSubtitle.setText(task.getDescription() != null ? task.getDescription() : "");
 
             // Hiển thị Deadline (Ưu tiên hiển thị time dạng chuỗi bạn nhập)
             String timeText = task.getTime() != null ? task.getTime() : "";

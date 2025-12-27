@@ -29,7 +29,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
-public class HomeFragment extends Fragment {
+public class StudentHomeFragment extends Fragment {
 
     private HomeViewModel homeViewModel;
     private TimerViewModel timerViewModel;
@@ -45,7 +45,7 @@ public class HomeFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_home, container, false);
+        return inflater.inflate(R.layout.fragment_student_home, container, false);
     }
 
     @Override
@@ -73,7 +73,7 @@ public class HomeFragment extends Fragment {
 
             NavController navController = Navigation.findNavController(view);
             try {
-                navController.navigate(R.id.action_homeFragment_to_taskDetailFragment, bundle);
+                navController.navigate(R.id.action_studentHomeFragment_to_studentTaskDetailFragment, bundle);
             } catch (Exception e) {
                 Toast.makeText(getContext(), "Lỗi điều hướng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
@@ -94,7 +94,7 @@ public class HomeFragment extends Fragment {
             Bundle bundle = new Bundle();
             bundle.putString("taskId", String.valueOf(task.getId()));
             try {
-                Navigation.findNavController(view).navigate(R.id.action_homeFragment_to_taskDetailFragment, bundle);
+                Navigation.findNavController(view).navigate(R.id.action_studentHomeFragment_to_studentTaskDetailFragment, bundle);
             } catch (Exception e) {}
         });
         rvActiveTimers.setAdapter(activeTimersAdapter);
@@ -103,7 +103,7 @@ public class HomeFragment extends Fragment {
         btnAdd.setOnClickListener(v -> {
             NavController navController = Navigation.findNavController(view);
             try {
-                navController.navigate(R.id.action_homeFragment_to_addEditFragment);
+                navController.navigate(R.id.action_studentHomeFragment_to_studentTaskAddEditFragment);
             } catch (Exception e) {
                 Toast.makeText(getContext(), "Chưa cấu hình action Add!", Toast.LENGTH_SHORT).show();
             }
@@ -217,7 +217,7 @@ public class HomeFragment extends Fragment {
         viewMoreItem.setOnClickListener(v -> {
             try {
                 NavController navController = Navigation.findNavController(requireView());
-                navController.navigate(R.id.scheduleFragment);
+                navController.navigate(R.id.studentScheduleFragment);
             } catch (Exception e) {
                 Toast.makeText(getContext(), "Không tìm thấy màn hình Lịch", Toast.LENGTH_SHORT).show();
             }

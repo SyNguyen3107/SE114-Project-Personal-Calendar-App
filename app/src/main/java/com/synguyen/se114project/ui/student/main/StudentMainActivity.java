@@ -1,4 +1,4 @@
-package com.synguyen.se114project.ui.student;
+package com.synguyen.se114project.ui.student.main;
 
 import android.os.Bundle;
 import android.view.View;
@@ -18,7 +18,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.synguyen.se114project.R;
 import com.synguyen.se114project.worker.SyncWorker;
 
-public class MainActivity extends AppCompatActivity {
+public class StudentMainActivity extends AppCompatActivity {
 
     private NavController navController;
     private BottomNavigationView bottomNavigationView;
@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_student_main);
 
         // 1. Tìm BottomNav
         bottomNavigationView = findViewById(R.id.bottom_nav_view);
@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
             navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
                 int destId = destination.getId();
                 // LƯU Ý: Đảm bảo ID này khớp với ID trong nav_graph.xml
-                if (destId == R.id.addEditFragment || destId == R.id.taskDetailFragment) {
+                if (destId == R.id.studentTaskAddEditFragment || destId == R.id.studentTaskDetailFragment) {
                     bottomNavigationView.setVisibility(View.GONE);
                 } else {
                     bottomNavigationView.setVisibility(View.VISIBLE);

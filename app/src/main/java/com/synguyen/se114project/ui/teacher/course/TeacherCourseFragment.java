@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.work.Constraints;
@@ -28,7 +29,7 @@ import com.synguyen.se114project.data.entity.Course;
 import com.synguyen.se114project.data.remote.RetrofitClient;
 import com.synguyen.se114project.data.remote.SupabaseService;
 import com.synguyen.se114project.ui.adapter.TeacherCourseAdapter;
-import com.synguyen.se114project.ui.teacher.coursedetail.TeacherCourseDetailActivity;
+import com.synguyen.se114project.ui.teacher.coursedetail.TeacherCourseDetailFragment;
 import com.synguyen.se114project.worker.SyncWorker;
 
 import java.util.List;
@@ -68,14 +69,24 @@ public class TeacherCourseFragment extends Fragment {
 
         // Khởi tạo Adapter
         adapter = new TeacherCourseAdapter(course -> {
+            // 1. Kiểm tra an toàn dữ liệu
             String id = (course.getId() != null) ? course.getId() : "";
             String name = (course.getName() != null) ? course.getName() : "Chi tiết";
 
-            // Intent: Dùng getContext() thay cho TeacherHomeActivity.this
-            Intent intent = new Intent(getContext(), TeacherCourseDetailActivity.class);
-            intent.putExtra("COURSE_ID", id);
-            intent.putExtra("COURSE_NAME", name);
-            startActivity(intent);
+            // 2. Đóng gói dữ liệu vào Bundle
+            Bundle bundle = new Bundle();
+            bundle.putString("COURSE_ID", id);
+            bundle.putString("COURSE_NAME", name);
+
+            // 3. Sử dụng Navigation Component để chuyển màn hình (KHÔNG DÙNG INTENT)
+            try {
+                Navigation.findNavController(requireView()).navigate(
+                        R.id.action_teacherCourseFragment_to_teacherCourseDetailFragment,
+                        bundle
+                );
+            } catch (Exception e) {
+                Toast.makeText(getContext(), "Lỗi điều hướng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
         });
         rcvCourses.setAdapter(adapter);
 

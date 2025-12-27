@@ -2,7 +2,6 @@ package com.synguyen.se114project.ui.student.taskdetail;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
@@ -10,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -53,7 +53,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class TaskDetailFragment extends Fragment {
+public class StudentTaskDetailFragment extends Fragment {
 
     private TaskDetailViewModel mViewModel;
     private TimerViewModel timerViewModel;
@@ -68,13 +68,18 @@ public class TaskDetailFragment extends Fragment {
     private TextView tvProgressPercent;
     private RecyclerView rvSubtasks;
     private ImageView btnBack;
-    private View btnMoreOptions;
+    private View btnEditSubtask;
     private Button btnStart, btnTakeBreak;
     private View btnUploadLayout;
     private TextView tvUploadStatus;
     private ProgressBar pbUpload;
+    private TextView btnReadMore;
+    private String currentDescription = ""; // Stores current description content
+    private String taskTitle = "";
     private Uri selectedFileUri;
+    private Button btnDeleteTask;
 
+    // File Selection Launcher
     private final ActivityResultLauncher<String> pickFileLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
             uri -> {
@@ -82,7 +87,7 @@ public class TaskDetailFragment extends Fragment {
                     selectedFileUri = uri;
                     String fileName = FileUtils.getFileName(requireContext(), uri);
 
-                    // Sau khi chọn file, hiện Dialog xác nhận nộp ngay
+                    // Show confirmation dialog after selecting file
                     showConfirmUploadDialog(fileName);
                 }
             }
@@ -93,23 +98,29 @@ public class TaskDetailFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             taskId = getArguments().getString("taskId");
+            taskTitle = getArguments().getString("taskTitle");
+            // Optionally load initial description from arguments if passed
+            // currentDescription = getArguments().getString("taskDescription");
         }
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_task_detail, container, false);
+        return inflater.inflate(R.layout.fragment_student_task_detail, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // 1. Ánh xạ View
+        // 1. Map Views
         tvTitle = view.findViewById(R.id.tvTaskTitle);
         tvDeadline = view.findViewById(R.id.tvTaskDeadline);
         tvDescription = view.findViewById(R.id.tvTaskDescription);
+        btnReadMore = view.findViewById(R.id.btnReadMore);
+
+        btnReadMore.setOnClickListener(v -> showEditDescriptionDialog());
 
         // Timer Views
         tvTimerDisplay = view.findViewById(R.id.tv_timer_display);
@@ -124,13 +135,16 @@ public class TaskDetailFragment extends Fragment {
 
         // Navigation Views
         btnBack = view.findViewById(R.id.btnBack);
-        btnMoreOptions = view.findViewById(R.id.btnEditSubtask);
+        btnEditSubtask = view.findViewById(R.id.btnEditSubtask);
 
-        // Upload Views (Mapping đúng với ID trong XML)
+        // Upload Views (Mapping matches XML IDs)
         btnUploadLayout = view.findViewById(R.id.layoutUpload);
         tvUploadStatus = view.findViewById(R.id.tvUploadStatus);
         pbUpload = view.findViewById(R.id.pbUpload);
+        btnDeleteTask = view.findViewById(R.id.btnDeleteTask);
 
+        // 3. Gán sự kiện
+        btnDeleteTask.setOnClickListener(v -> showConfirmDeleteDialog());
         // 2. ViewModel
         mViewModel = new ViewModelProvider(this).get(TaskDetailViewModel.class);
         timerViewModel = new ViewModelProvider(requireActivity()).get(TimerViewModel.class);
@@ -147,11 +161,11 @@ public class TaskDetailFragment extends Fragment {
         // 5. Events
         btnBack.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
 
-        if (btnMoreOptions != null) {
-            btnMoreOptions.setOnClickListener(v -> showEditSubtasksDialog());
+        if (btnEditSubtask != null) {
+            btnEditSubtask.setOnClickListener(v -> showEditSubtasksDialog());
         }
 
-        // Sự kiện Upload: Bấm vào layout -> Mở trình chọn file
+        // Upload Event: Click layout -> Open file picker
         if (btnUploadLayout != null) {
             btnUploadLayout.setOnClickListener(v -> openFilePicker());
         }
@@ -160,24 +174,120 @@ public class TaskDetailFragment extends Fragment {
         setupTimerLogic();
     }
 
-    // --- CÁC HÀM XỬ LÝ UPLOAD FILE ---
+    // --- FILE UPLOAD LOGIC ---
 
     private void openFilePicker() {
-        // Chỉ chọn file PDF (hoặc thay đổi MIME type nếu cần)
+        // Only select PDF files
         pickFileLauncher.launch("application/pdf");
     }
 
     private void showConfirmUploadDialog(String fileName) {
         new AlertDialog.Builder(requireContext())
-                .setTitle("Xác nhận nộp bài")
-                .setMessage("Bạn có muốn nộp file này không?\n\n" + fileName)
-                .setPositiveButton("Nộp ngay", (dialog, which) -> {
+                .setTitle("Confirm Submission")
+                .setMessage("Do you want to submit this file?\n\n" + fileName)
+                .setPositiveButton("Submit Now", (dialog, which) -> {
                     uploadSubmission();
                 })
-                .setNegativeButton("Hủy", (dialog, which) -> {
-                    selectedFileUri = null; // Reset chọn file
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    selectedFileUri = null; // Reset selection
                 })
                 .show();
+    }
+
+    private void deleteTaskAPI() {
+        if (taskId == null) return;
+
+        // Loading UI (Optional: Bạn có thể hiện ProgressBar nếu muốn)
+        btnDeleteTask.setEnabled(false);
+        btnDeleteTask.setText("Deleting...");
+
+        SharedPreferences prefs = requireActivity().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
+        String token = prefs.getString("ACCESS_TOKEN", "");
+
+        SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
+
+        // Gọi API DELETE: tasks?id=eq.{taskId}
+        service.deleteTask(BuildConfig.SUPABASE_KEY, "Bearer " + token, "eq." + taskId)
+                .enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(Call<Void> call, Response<Void> response) {
+                        if (!isAdded()) return;
+
+                        // Supabase trả về 204 No Content khi xoá thành công
+                        if (response.isSuccessful() || response.code() == 204) {
+
+                            // A. Xoá khỏi Local Database (Room) thông qua ViewModel
+                            if (currentTask != null) {
+                                mViewModel.deleteTask(currentTask);
+                            }
+
+                            Toast.makeText(getContext(), "Task deleted successfully", Toast.LENGTH_SHORT).show();
+
+                            // B. Thoát màn hình Detail, quay về Home
+                            // Vì Home dùng LiveData quan sát Room, danh sách sẽ tự cập nhật
+                            Navigation.findNavController(requireView()).navigateUp();
+
+                        } else {
+                            btnDeleteTask.setEnabled(true);
+                            btnDeleteTask.setText("Delete this task");
+                            Toast.makeText(getContext(), "Failed to delete: " + response.code(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Void> call, Throwable t) {
+                        if (isAdded()) {
+                            btnDeleteTask.setEnabled(true);
+                            btnDeleteTask.setText("Delete this task");
+                            Toast.makeText(getContext(), "Network error", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
+
+    private void showEditDescriptionDialog() {
+        // Kiểm tra an toàn: Nếu Task chưa load xong thì không hiện dialog
+        if (currentTask == null) {
+            Toast.makeText(getContext(), "Đang tải dữ liệu...", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // 1. Tạo View cho Dialog
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_edit_description, null);
+
+        TextView tvDialogTitle = dialogView.findViewById(R.id.tvDialogTitle);
+        EditText edtDescription = dialogView.findViewById(R.id.edtDescription);
+        Button btnSave = dialogView.findViewById(R.id.btnSaveDescription);
+        Button btnCancel = dialogView.findViewById(R.id.btnCancelDescription); // Ánh xạ nút Cancel mới
+
+        // 2. Thiết lập dữ liệu (Dùng currentTask.getTitle() thay vì biến taskTitle cũ có thể bị null)
+        String safeTitle = (currentTask.getTitle() != null) ? currentTask.getTitle() : "Task";
+        tvDialogTitle.setText(safeTitle + "'s Description");
+
+        // Hiển thị description hiện tại
+        edtDescription.setText(currentDescription);
+
+        // 3. Khởi tạo AlertDialog
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .setCancelable(true)
+                .create();
+
+        // Làm nền dialog trong suốt để bo góc đẹp hơn (Optional)
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        // 4. Xử lý sự kiện nút Save
+        btnSave.setOnClickListener(v -> {
+            String newDesc = edtDescription.getText().toString().trim();
+            updateDescriptionAPI(newDesc, dialog);
+        });
+
+        // 5. Xử lý sự kiện nút Cancel
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
 
     private void checkExistingSubmission() {
@@ -197,7 +307,7 @@ public class TaskDetailFragment extends Fragment {
                     public void onResponse(Call<List<FileObject>> call, Response<List<FileObject>> response) {
                         if (isAdded() && response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
                             FileObject existingFile = response.body().get(0);
-                            tvUploadStatus.setText("Đã nộp: " + existingFile.name);
+                            tvUploadStatus.setText("Submitted: " + existingFile.name);
                             tvUploadStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
                         }
                     }
@@ -208,33 +318,78 @@ public class TaskDetailFragment extends Fragment {
                 });
     }
 
+    private void updateDescriptionAPI(String newDesc, AlertDialog dialog) {
+        // 1. Lấy token
+        SharedPreferences prefs = requireActivity().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
+        String token = prefs.getString("ACCESS_TOKEN", "");
+
+        SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
+
+        // 2. Tạo object chỉ chứa field cần update để gửi lên server
+        Task updateData = new Task();
+        updateData.setDescription(newDesc);
+
+        // 3. Gọi API
+        service.updateTask(BuildConfig.SUPABASE_KEY, "Bearer " + token, "eq." + taskId, updateData)
+                .enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(Call<Void> call, Response<Void> response) {
+                        if (!isAdded()) return;
+
+                        if (response.isSuccessful()) {
+                            // --- CẬP NHẬT UI ---
+                            currentDescription = newDesc;
+                            tvDescription.setText(newDesc);
+
+                            // --- [QUAN TRỌNG] CẬP NHẬT LOCAL DATABASE ---
+                            if (currentTask != null) {
+                                currentTask.setDescription(newDesc);
+                                // Gọi ViewModel để lưu vào Room.
+                                // Việc này sẽ tự động làm mới HomeFragment và cache lại dữ liệu mới.
+                                mViewModel.updateTask(currentTask);
+                            }
+
+                            dialog.dismiss();
+                            Toast.makeText(getContext(), "Đã lưu thay đổi!", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(getContext(), "Lỗi server: " + response.code(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Void> call, Throwable t) {
+                        if (isAdded()) {
+                            Toast.makeText(getContext(), "Lỗi mạng: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
+
     private void uploadSubmission() {
         if (selectedFileUri == null || currentTask == null) return;
 
         // UI Loading
         pbUpload.setVisibility(View.VISIBLE);
-        tvUploadStatus.setText("Đang tải lên...");
-        btnUploadLayout.setEnabled(false); // Khóa nút bấm
+        tvUploadStatus.setText("Uploading...");
+        btnUploadLayout.setEnabled(false); // Lock button
 
         try {
-            // 1. Chuyển Uri thành File thật
+            // 1. Convert Uri to real File
             File file = FileUtils.getFileFromUri(requireContext(), selectedFileUri);
 
-            // 2. Tạo RequestBody (PDF)
+            // 2. Create RequestBody (PDF)
             RequestBody requestFile = RequestBody.create(MediaType.parse("application/pdf"), file);
 
-            // 3. Lấy thông tin User & Token
+            // 3. Get User Info & Token
             SharedPreferences prefs = requireActivity().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
             String token = prefs.getString("ACCESS_TOKEN", "");
             String userId = prefs.getString("USER_ID", "");
 
-            // 4. Tạo tên file unique theo userId để hỗ trợ ghi đè
+            // 4. Create unique file name using userId to support overwriting
             String serverFileName = "assign_" + currentTask.getId() + "_" + userId + ".pdf";
 
-            // 5. Gọi API với x-upsert: true
-            // Thay vì dùng file.getName() (chứa tiếng Việt), hãy dùng serverFileName (tiếng Anh)
+            // 5. Call API with x-upsert: true
             MultipartBody.Part body = MultipartBody.Part.createFormData("file", serverFileName, requestFile);
-            // -------------------------------------
 
             SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
             service.uploadFile(BuildConfig.SUPABASE_KEY, "Bearer " + token, "true", "assignments", serverFileName, body)
@@ -246,15 +401,15 @@ public class TaskDetailFragment extends Fragment {
                             btnUploadLayout.setEnabled(true);
 
                             if (response.isSuccessful()) {
-                                Toast.makeText(getContext(), "Nộp bài thành công!", Toast.LENGTH_SHORT).show();
-                                tvUploadStatus.setText("Đã nộp: " + file.getName());
+                                Toast.makeText(getContext(), "Submission successful!", Toast.LENGTH_SHORT).show();
+                                tvUploadStatus.setText("Submitted: " + file.getName());
                                 tvUploadStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
 
-                                // Clear uri để tránh nộp lại file cũ
+                                // Clear uri to avoid re-uploading old file
                                 selectedFileUri = null;
                             } else {
-                                Toast.makeText(getContext(), "Lỗi upload: " + response.code(), Toast.LENGTH_SHORT).show();
-                                tvUploadStatus.setText("Lỗi tải lên. Nhấn để thử lại.");
+                                Toast.makeText(getContext(), "Upload error: " + response.code(), Toast.LENGTH_SHORT).show();
+                                tvUploadStatus.setText("Upload failed. Tap to retry.");
                                 tvUploadStatus.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
                             }
                         }
@@ -263,8 +418,8 @@ public class TaskDetailFragment extends Fragment {
                         public void onFailure(Call<ResponseBody> call, Throwable t) {
                             pbUpload.setVisibility(View.GONE);
                             btnUploadLayout.setEnabled(true);
-                            Toast.makeText(getContext(), "Lỗi mạng: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                            tvUploadStatus.setText("Lỗi mạng. Nhấn để thử lại.");
+                            Toast.makeText(getContext(), "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                            tvUploadStatus.setText("Network error. Tap to retry.");
                         }
                     });
 
@@ -272,11 +427,11 @@ public class TaskDetailFragment extends Fragment {
             pbUpload.setVisibility(View.GONE);
             btnUploadLayout.setEnabled(true);
             e.printStackTrace();
-            Toast.makeText(getContext(), "Lỗi file: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "File error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
-    // --- CÁC HÀM LOGIC CŨ (GIỮ NGUYÊN) ---
+    // --- TIMER & OTHER LOGIC (UNCHANGED) ---
 
     private long getTaskDuration() {
         if (currentTask != null && currentTask.getDuration() > 0) {
@@ -367,7 +522,6 @@ public class TaskDetailFragment extends Fragment {
         rvSubtasks.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new SubtaskAdapter();
 
-        // Cập nhật lại Listener với đầy đủ 3 phương thức
         adapter.setOnSubtaskClickListener(new SubtaskAdapter.OnSubtaskActionListener() {
             @Override
             public void onCheck(Subtask subtask, boolean isChecked) {
@@ -376,15 +530,12 @@ public class TaskDetailFragment extends Fragment {
 
             @Override
             public void onDelete(Subtask subtask) {
-                // Màn hình chính không có nút xóa nên để trống
+                // Not implemented on main screen
             }
 
             @Override
             public void onEdit(Subtask subtask) {
-                // [FIX LỖI] Phải implement phương thức này để không bị báo đỏ
-                // Bạn có thể để trống (không cho sửa ở màn hình ngoài)
-                // hoặc gọi hàm sửa tên nếu muốn:
-                // showRenameSubtaskDialog(subtask, adapter);
+                // Optional: Implement edit logic here if desired
             }
         });
         rvSubtasks.setAdapter(adapter);
@@ -395,7 +546,11 @@ public class TaskDetailFragment extends Fragment {
             if (task != null) {
                 currentTask = task;
                 tvTitle.setText(task.getTitle());
-                tvDescription.setText(task.getSubTitle());
+                // Update description from DB in case it changed
+                if (task.getDescription() != null) {
+                    currentDescription = task.getDescription();
+                    tvDescription.setText(currentDescription);
+                }
 
                 if (task.getDate() > 0) {
                     SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH);
@@ -449,7 +604,7 @@ public class TaskDetailFragment extends Fragment {
         rvDialog.setLayoutManager(new LinearLayoutManager(getContext()));
         SubtaskAdapter dialogAdapter = new SubtaskAdapter();
 
-        // Tạo bản sao danh sách để không ảnh hưởng trực tiếp UI bên ngoài cho đến khi Save/Refresh
+        // Create copy of list to modify in dialog
         List<Subtask> tempSubtasks = new ArrayList<>();
         if (currentSubtasks != null) {
             for (Subtask original : currentSubtasks) {
@@ -458,7 +613,6 @@ public class TaskDetailFragment extends Fragment {
                 copy.setTaskId(original.getTaskId());
                 copy.setTitle(original.getTitle());
                 copy.setCompleted(original.isCompleted());
-                // Copy thêm các trường khác nếu cần (isSynced, isDeleted...)
                 tempSubtasks.add(copy);
             }
         }
@@ -476,7 +630,7 @@ public class TaskDetailFragment extends Fragment {
                 List<Subtask> current = new ArrayList<>(dialogAdapter.getCurrentList());
                 current.remove(subtask);
                 dialogAdapter.submitList(current);
-                mViewModel.deleteSubtask(subtask); // Xóa ngay trong DB
+                mViewModel.deleteSubtask(subtask); // Delete immediately from DB
             }
 
             @Override
@@ -489,7 +643,7 @@ public class TaskDetailFragment extends Fragment {
         btnAdd.setOnClickListener(v -> {
             if (currentTask != null) {
                 Subtask newSub = new Subtask(currentTask.getId(), "New Subtask");
-                mViewModel.addSubtask(newSub); // Thêm ngay vào DB
+                mViewModel.addSubtask(newSub); // Add immediately to DB
                 List<Subtask> current = new ArrayList<>(dialogAdapter.getCurrentList());
                 current.add(newSub);
                 dialogAdapter.submitList(current);
@@ -497,7 +651,7 @@ public class TaskDetailFragment extends Fragment {
         });
 
         btnSave.setOnClickListener(v -> {
-            // Lưu trạng thái hoàn thành (và tên mới nếu có thay đổi)
+            // Save completion status
             for (Subtask s : dialogAdapter.getCurrentList()) {
                 mViewModel.updateSubtaskStatus(s, s.isCompleted());
             }
@@ -508,22 +662,39 @@ public class TaskDetailFragment extends Fragment {
         btnClose.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
+
+    private void showConfirmDeleteDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Delete Task")
+                .setMessage("Are you sure you want to delete this task? This action cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    // Thực hiện xoá
+                    deleteTaskAPI();
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    dialog.dismiss();
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
+    }
+
     private void showRenameSubtaskDialog(Subtask subtask, SubtaskAdapter adapter) {
         android.widget.EditText editText = new android.widget.EditText(requireContext());
         editText.setText(subtask.getTitle());
         editText.setPadding(50, 30, 50, 30);
 
         new android.app.AlertDialog.Builder(requireContext())
-                .setTitle("Đổi tên công việc")
+                .setTitle("Rename Subtask")
                 .setView(editText)
-                .setPositiveButton("Lưu", (dialog, which) -> {
+                .setPositiveButton("Save", (dialog, which) -> {
                     String newTitle = editText.getText().toString().trim();
                     if (!newTitle.isEmpty()) {
                         subtask.setTitle(newTitle);
-                        adapter.notifyDataSetChanged(); // Cập nhật giao diện list ngay lập tức
+                        mViewModel.updateSubtaskTitle(subtask); // Ensure this method exists in ViewModel
+                        adapter.notifyDataSetChanged();
                     }
                 })
-                .setNegativeButton("Hủy", null)
+                .setNegativeButton("Cancel", null)
                 .show();
     }
 }

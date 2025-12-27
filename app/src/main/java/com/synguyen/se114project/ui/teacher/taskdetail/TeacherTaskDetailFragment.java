@@ -38,11 +38,12 @@ public class TeacherTaskDetailFragment extends Fragment {
     private String token;
 
     // Views
-    private TextView tvTimerDisplay, tvTitle;
-    private ProgressBar pbTimer;
+    private TextView tvTimerDisplay, tvTitle, tvDeadline, tvDescription;
+    private ProgressBar pbTimer, pbTaskProgress;
     private Button btnStart, btnPause;
     private RecyclerView rcvSubtasks;
-    private ImageView btnBack, btnAddSubtask;
+    private ImageView btnBack;
+    private TextView btnEditSubtask;
 
     // Timer Logic
     private CountDownTimer timer;
@@ -69,22 +70,23 @@ public class TeacherTaskDetailFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_teacher_task_detail, container, false);
 
         if (getArguments() != null) {
-            taskId = getArguments().getString("TASK_ID");
-            taskTitle = getArguments().getString("TASK_TITLE");
+            taskId = getArguments().getString("taskId");
+            taskTitle = getArguments().getString("taskTitle");
         }
 
         SharedPreferences prefs = requireActivity().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
         token = prefs.getString("ACCESS_TOKEN", null);
 
-        // Ánh xạ View
-        tvTitle = view.findViewById(R.id.tvDetailTitle);
-        tvTimerDisplay = view.findViewById(R.id.tvTimerDisplay); // Bạn cần thêm ID này vào XML
-        pbTimer = view.findViewById(R.id.pbDetailTimer);        // Bạn cần thêm ID này vào XML
-        btnStart = view.findViewById(R.id.btnStartTimer);       // Bạn cần thêm ID này vào XML
-        btnPause = view.findViewById(R.id.btnPauseTimer);       // Bạn cần thêm ID này vào XML
-//        rcvSubtasks = view.findViewById(R.id.rcvDetailSubtasks); // Bạn cần thêm ID này vào XML
+        tvTitle = view.findViewById(R.id.tvTaskTitle);
+        tvTimerDisplay = view.findViewById(R.id.tv_timer_display);
+        pbTimer = view.findViewById(R.id.pbTimer);
+        btnStart = view.findViewById(R.id.btnStart);
+        btnPause = view.findViewById(R.id.btnTakeBreak); // Ánh xạ nút "Take break" làm nút Pause
+        rcvSubtasks = view.findViewById(R.id.rvSubtasks);
         btnBack = view.findViewById(R.id.btnBack);
-//        btnAddSubtask = view.findViewById(R.id.btnAddSubtask);  // Nút cộng nhỏ để thêm subtask
+        btnEditSubtask = view.findViewById(R.id.btnEditSubtask); // Dùng nút Edit làm chức năng thêm/sửa
+
+        btnEditSubtask.setOnClickListener(v -> showAddSubtaskDialog());
 
         // Setup UI
         tvTitle.setText(taskTitle);
@@ -94,12 +96,12 @@ public class TeacherTaskDetailFragment extends Fragment {
 
         // Events
         btnBack.setOnClickListener(v -> {
-            if (getActivity() != null) getActivity().getSupportFragmentManager().popBackStack();
+            androidx.navigation.Navigation.findNavController(v).navigateUp();
         });
 
         btnStart.setOnClickListener(v -> startTimer());
         btnPause.setOnClickListener(v -> pauseTimer());
-        btnAddSubtask.setOnClickListener(v -> showAddSubtaskDialog());
+        btnEditSubtask.setOnClickListener(v -> showAddSubtaskDialog());
 
         return view;
     }

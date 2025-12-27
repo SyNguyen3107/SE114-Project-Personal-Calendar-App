@@ -1,4 +1,4 @@
-package com.synguyen.se114project.ui.student.profile;
+package com.synguyen.se114project.ui.common;
 
 import android.app.AlertDialog;
 import android.content.Context;

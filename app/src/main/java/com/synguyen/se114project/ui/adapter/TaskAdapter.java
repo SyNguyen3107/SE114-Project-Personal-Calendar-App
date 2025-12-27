@@ -108,7 +108,7 @@ public class TaskAdapter extends ListAdapter<Task, TaskAdapter.TaskViewHolder> {
 
         public void bind(final Task task, final OnItemClickListener listener, final OnTaskCheckListener checkListener) {
             tvTitle.setText(task.getTitle());
-            tvSubTitle.setText(task.getSubTitle());
+            tvSubTitle.setText(task.getDescription());
             tvTime.setText(task.getTime());
 
             // --- XỬ LÝ TRẠNG THÁI HOÀN THÀNH ---

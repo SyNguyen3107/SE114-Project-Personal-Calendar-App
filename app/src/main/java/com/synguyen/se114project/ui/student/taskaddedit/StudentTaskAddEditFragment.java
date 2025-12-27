@@ -1,4 +1,4 @@
-package com.synguyen.se114project.ui.student.addedit;
+package com.synguyen.se114project.ui.student.taskaddedit;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
@@ -30,7 +30,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-public class AddEditFragment extends Fragment {
+public class StudentTaskAddEditFragment extends Fragment {
 
     private AddEditViewModel mViewModel;
 
@@ -51,7 +51,7 @@ public class AddEditFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_add_edit, container, false);
+        return inflater.inflate(R.layout.fragment_student_task_add_edit, container, false);
     }
 
     @Override

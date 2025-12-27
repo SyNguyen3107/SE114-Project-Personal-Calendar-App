@@ -32,7 +32,6 @@ import com.synguyen.se114project.data.remote.response.FileObject;
 import com.synguyen.se114project.ui.adapter.MaterialAdapter;
 import com.synguyen.se114project.ui.adapter.TaskAdapter;
 import com.synguyen.se114project.viewmodel.student.CourseDetailViewModel;
-import com.synguyen.se114project.data.entity.Task;
 
 import java.util.List;
 
@@ -40,7 +39,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class CourseDetailFragment extends Fragment {
+public class StudentCourseDetailFragment extends Fragment {
 
     private String courseId;
     private CourseDetailViewModel mViewModel;
@@ -68,7 +67,7 @@ public class CourseDetailFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_course_detail, container, false);
+        return inflater.inflate(R.layout.fragment_student_course_detail, container, false);
     }
 
     @Override
@@ -111,7 +110,7 @@ public class CourseDetailFragment extends Fragment {
             Bundle bundle = new Bundle();
             bundle.putString("taskId", task.getId());
             Navigation.findNavController(requireView())
-                    .navigate(R.id.action_courseDetailFragment_to_taskDetailFragment, bundle);
+                    .navigate(R.id.action_studentCourseDetailFragment_to_studentTaskDetailFragment, bundle);
         });
         rvTasks.setAdapter(taskAdapter);
     }
