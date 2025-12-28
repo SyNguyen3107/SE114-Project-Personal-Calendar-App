@@ -85,7 +85,7 @@ public class TeacherTasksFragment extends Fragment {
         SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
 
         // SỬA: Thêm "Bearer " trước token và "eq." trước courseId
-        service.getTasksByCourse(BuildConfig.SUPABASE_KEY, "Bearer " + token, "eq." + courseId)
+        service.getTasksByCourse( "Bearer " + token, "eq." + courseId)
                 .enqueue(new Callback<List<Task>>() {
                     @Override
                     public void onResponse(Call<List<Task>> call, Response<List<Task>> response) {
@@ -143,7 +143,7 @@ public class TeacherTasksFragment extends Fragment {
         task.setPriority(1);
 
         // SỬA: Thêm "Bearer " trước token
-        service.createTask(BuildConfig.SUPABASE_KEY, "Bearer " + token, task).enqueue(new Callback<List<Task>>() {
+        service.createTask( "Bearer " + token, task).enqueue(new Callback<List<Task>>() {
             @Override
             public void onResponse(Call<List<Task>> call, Response<List<Task>> response) {
                 if (response.isSuccessful()) {

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F5F5F5">
+
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/svStudents"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:background="@drawable/bg_white_rounded"
+        android:elevation="2dp"
+        app:iconifiedByDefault="false"
+        app:queryHint="Tìm tên, MSSV, email..."
+        xmlns:app="http://schemas.android.com/apk/res-auto"/>
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvCourseStudents"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingBottom="16dp"
+        android:clipToPadding="false"/>
+
+</LinearLayout>

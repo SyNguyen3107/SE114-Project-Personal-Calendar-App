@@ -63,7 +63,7 @@ public class SyncWorker extends Worker {
                 if (task.isDeleted()) {
                     // TRƯỜNG HỢP XÓA: Gọi API Delete
                     Call<Void> call = supabaseService.deleteTask(
-                            BuildConfig.SUPABASE_KEY, "Bearer " + token, "eq." + task.getId());
+                            "Bearer " + token, "eq." + task.getId());
                     Response<Void> response = call.execute(); // Dùng execute() đồng bộ
 
                     if (response.isSuccessful()) {
@@ -78,7 +78,7 @@ public class SyncWorker extends Worker {
 
                     // Cách đơn giản nhất cho đồ án: Gọi Update trước (PATCH)
                     Call<Void> callUpdate = supabaseService.updateTask(
-                            BuildConfig.SUPABASE_KEY, "Bearer " + token, "eq." + task.getId(), task);
+                             "Bearer " + token, "eq." + task.getId(), task);
                     Response<Void> resUpdate = callUpdate.execute();
 
                     if (resUpdate.isSuccessful()) {
@@ -86,7 +86,7 @@ public class SyncWorker extends Worker {
                     } else {
                         // Nếu Update không tìm thấy ID (404) -> Gọi Create (POST)
                         Call<List<Task>> callCreate = supabaseService.createTask(
-                                BuildConfig.SUPABASE_KEY, "Bearer " + token, task);
+                                "Bearer " + token, task);
                         Response<List<Task>> resCreate = callCreate.execute();
                         if (resCreate.isSuccessful()) success = true;
                     }

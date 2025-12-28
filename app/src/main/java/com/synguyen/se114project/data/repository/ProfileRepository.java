@@ -28,7 +28,6 @@ public class ProfileRepository {
     // Lấy thông tin Profile
     public void getProfile(String accessToken, String userId, ResultCallback<Profile> cb) {
         service.getProfile(
-                BuildConfig.SUPABASE_KEY,
                 "Bearer " + accessToken,
                 "eq." + userId
         ).enqueue(new Callback<List<Profile>>() {
@@ -62,7 +61,6 @@ public class ProfileRepository {
         // Nếu muốn update thêm user_code thì: body.addProperty("user_code", code);
 
         service.updateProfile(
-                BuildConfig.SUPABASE_KEY,
                 "Bearer " + accessToken,
                 "eq." + userId,
                 body // Truyền JsonObject vào

@@ -148,7 +148,7 @@ public class TeacherMaterialsFragment extends Fragment {
 
             // bucket name = "materials" (Bạn phải tạo bucket này trên Supabase Dashboard trước)
             // Thêm tham số "false" cho x-upsert
-            service.uploadFile(BuildConfig.SUPABASE_KEY, "Bearer " + token, "false", "materials", fileNameOnServer, body)
+            service.uploadFile("Bearer " + token, "false", "materials", fileNameOnServer, body)
                     .enqueue(new Callback<ResponseBody>() {
                         @Override
                         public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {

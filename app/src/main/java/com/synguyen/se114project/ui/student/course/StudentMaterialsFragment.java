@@ -83,7 +83,7 @@ public class StudentMaterialsFragment extends Fragment {
         body.addProperty("prefix", "course_" + courseId); // QUAN TRỌNG: Chỉ lấy file của môn này
         body.addProperty("limit", 100);
 
-        service.listFiles(BuildConfig.SUPABASE_KEY, "Bearer " + token, "materials", body)
+        service.listFiles( "Bearer " + token, "materials", body)
                 .enqueue(new Callback<List<FileObject>>() {
                     @Override
                     public void onResponse(Call<List<FileObject>> call, Response<List<FileObject>> response) {

@@ -114,7 +114,6 @@ public class CourseRepository {
 
                 // 3. Gọi hàm RPC từ SupabaseService
                 Call<List<Course>> call = mSupabaseService.getStudentCoursesRPC(
-                        BuildConfig.SUPABASE_KEY,
                         authHeader,
                         jsonBody
                 );
@@ -192,7 +191,7 @@ public class CourseRepository {
         body.addProperty("prefix", "course_" + courseId);
         body.addProperty("limit", 100);
 
-        mSupabaseService.listFiles(BuildConfig.SUPABASE_KEY, token, "materials", body)
+        mSupabaseService.listFiles(BuildConfig.SUPABASE_KEY, "materials", body)
                 .enqueue(callback);
     }
 }

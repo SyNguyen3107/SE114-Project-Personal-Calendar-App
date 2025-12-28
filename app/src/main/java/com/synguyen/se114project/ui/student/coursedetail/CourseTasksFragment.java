@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.synguyen.se114project.R;
 import com.synguyen.se114project.data.entity.Task; // Import Entity Task
 import com.synguyen.se114project.ui.adapter.TaskAdapter;
+import com.synguyen.se114project.ui.student.taskdetail.StudentTaskDetailFragment;
 import com.synguyen.se114project.viewmodel.student.TaskViewModel;
 
 public class CourseTasksFragment extends Fragment {
@@ -83,9 +84,6 @@ public class CourseTasksFragment extends Fragment {
                 }
             });
 
-            // =================================================================
-            // [QUAN TRỌNG] ĐÂY LÀ DÒNG BẠN ĐANG THIẾU
-            // =================================================================
             Log.d("DEBUG_FRAGMENT", "Bắt đầu gọi lệnh refreshTasks từ ViewModel...");
             mViewModel.refreshTasks(mCourseId);
             // =================================================================
@@ -97,8 +95,31 @@ public class CourseTasksFragment extends Fragment {
         // 5. Xử lý sự kiện trong Adapter
         // Click vào item -> Xem chi tiết (Chưa làm, tạm thời Toast)
         mAdapter.setOnItemClickListener(task -> {
-            Toast.makeText(getContext(), "Clicked: " + task.getTitle(), Toast.LENGTH_SHORT).show();
-            // TODO: Navigate to TaskDetail logic here
+            StudentTaskDetailFragment detailFragment = new StudentTaskDetailFragment();
+            Bundle args = new Bundle();
+            args.putString("taskId", task.getId());
+            args.putString("taskTitle", task.getTitle());
+
+            // Đánh dấu là mở từ Course
+            args.putBoolean("IS_FROM_COURSE_DETAIL", true);
+
+            detailFragment.setArguments(args);
+
+            if (getActivity() != null) {
+                getActivity().getSupportFragmentManager().beginTransaction()
+                        .setCustomAnimations(
+                                android.R.anim.fade_in, android.R.anim.fade_out,
+                                android.R.anim.fade_in, android.R.anim.fade_out
+                        )
+                        .add(android.R.id.content, detailFragment)
+
+                        // --- [SỬA DÒNG NÀY] ---
+                        // Thay vì null, hãy đặt một cái tên định danh (Tag)
+                        .addToBackStack("TASK_DETAIL_SESSION")
+                        // ----------------------
+
+                        .commit();
+            }
         });
 
         // Click vào Checkbox -> Cập nhật trạng thái

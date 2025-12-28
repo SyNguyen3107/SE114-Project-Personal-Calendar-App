@@ -46,7 +46,7 @@ public class AuthRepository {
         body.addProperty("password", password);
 
         // Gọi API Login
-        supabaseService.loginUser(BuildConfig.SUPABASE_KEY, body).enqueue(new Callback<AuthResponse>() {
+        supabaseService.loginUser(body).enqueue(new Callback<AuthResponse>() {
             @Override
             public void onResponse(Call<AuthResponse> call, Response<AuthResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -72,7 +72,7 @@ public class AuthRepository {
         body.addProperty("email", email);
         body.addProperty("password", password);
 
-        supabaseService.signUpUser(BuildConfig.SUPABASE_KEY, body).enqueue(new Callback<AuthResponse>() {
+        supabaseService.signUpUser( body).enqueue(new Callback<AuthResponse>() {
             @Override
             public void onResponse(Call<AuthResponse> call, Response<AuthResponse> response) {
                 if (!response.isSuccessful() || response.body() == null) {
@@ -104,7 +104,6 @@ public class AuthRepository {
                 profile.setUserCode("SV" + randomCode);
 
                 supabaseService.insertProfile(
-                        BuildConfig.SUPABASE_KEY,
                         "Bearer " + accessToken,
                         profile
                 ).enqueue(new Callback<Void>() {

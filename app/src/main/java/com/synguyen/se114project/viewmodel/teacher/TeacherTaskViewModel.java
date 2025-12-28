@@ -47,7 +47,7 @@ public class TeacherTaskViewModel extends AndroidViewModel {
     public void fetchTaskDetail(String taskId) {
         if (token == null) return;
         // Gọi API lấy 1 task (dùng filter eq.id)
-        service.getTasksByCourse(BuildConfig.SUPABASE_KEY, "Bearer " + token, null) // Tạm dùng API cũ hoặc viết API getTaskById
+        service.getTasksByCourse( "Bearer " + token, null) // Tạm dùng API cũ hoặc viết API getTaskById
                 .enqueue(new Callback<List<Task>>() {
                     @Override
                     public void onResponse(Call<List<Task>> call, Response<List<Task>> response) {

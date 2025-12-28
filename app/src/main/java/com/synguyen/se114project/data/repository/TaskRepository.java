@@ -77,7 +77,7 @@ public class TaskRepository {
 
             String token = "Bearer " + mPrefs.getString("ACCESS_TOKEN", "");
             try {
-                Call<List<Task>> call = mSupabaseService.createTask(SUPABASE_KEY, token, task);
+                Call<List<Task>> call = mSupabaseService.createTask( token, task);
                 Response<List<Task>> response = call.execute();
                 if (response.isSuccessful()) {
                     task.setSynced(true);
@@ -101,7 +101,7 @@ public class TaskRepository {
             String token = "Bearer " + mPrefs.getString("ACCESS_TOKEN", "");
             try {
                 String queryId = "eq." + task.getId();
-                Call<Void> call = mSupabaseService.updateTask(SUPABASE_KEY, token, queryId, task);
+                Call<Void> call = mSupabaseService.updateTask(token, queryId, task);
                 Response<Void> response = call.execute();
 
                 if (response.isSuccessful()) {
@@ -123,7 +123,7 @@ public class TaskRepository {
             String token = "Bearer " + mPrefs.getString("ACCESS_TOKEN", "");
             try {
                 String queryId = "eq." + task.getId();
-                Call<Void> call = mSupabaseService.deleteTask(SUPABASE_KEY, token, queryId);
+                Call<Void> call = mSupabaseService.deleteTask( token, queryId);
                 Response<Void> response = call.execute();
                 if (response.isSuccessful()) {
                     mTaskDao.deletePhysicalTask(task);
@@ -205,7 +205,6 @@ public class TaskRepository {
                 Log.d("SYNC_TASK", "Bắt đầu tải task cho course: " + courseId);
 
                 Call<List<Task>> call = mSupabaseService.getTasks(
-                        SUPABASE_KEY,     // Sửa lại dùng hằng số SUPABASE_KEY
                         "Bearer " + token,
                         query,
                         "*",

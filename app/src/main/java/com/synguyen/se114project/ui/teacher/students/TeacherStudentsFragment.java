@@ -82,7 +82,7 @@ public class TeacherStudentsFragment extends Fragment {
         SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
 
         // Gọi API
-        service.getStudentsInCourse(BuildConfig.SUPABASE_KEY, "Bearer " + token, "eq." + courseId)
+        service.getStudentsInCourse("Bearer " + token, "eq." + courseId)
                 .enqueue(new Callback<List<EnrollmentResponse>>() {
                     @Override
                     public void onResponse(Call<List<EnrollmentResponse>> call, Response<List<EnrollmentResponse>> response) {

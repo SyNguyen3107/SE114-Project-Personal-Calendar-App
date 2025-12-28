@@ -123,7 +123,7 @@ public class LoginActivity extends AppCompatActivity {
         SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
 
         // Gọi API: select * from profiles where id = userId
-        service.getProfile(BuildConfig.SUPABASE_KEY, "Bearer " + token, "eq." + userId)
+        service.getProfile("Bearer " + token, "eq." + userId)
                 .enqueue(new Callback<List<Profile>>() {
                     @Override
                     public void onResponse(Call<List<Profile>> call, Response<List<Profile>> response) {

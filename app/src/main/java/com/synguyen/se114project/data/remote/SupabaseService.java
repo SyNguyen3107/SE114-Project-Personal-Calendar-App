@@ -28,155 +28,152 @@ import retrofit2.http.Query;
 
 public interface SupabaseService {
 
-    // 1. ĐĂNG NHẬP
+    // ===========================
+    // 1. AUTHENTICATION (Đăng nhập / Đăng ký)
+    // ===========================
+
+    // Đăng nhập
     @POST("auth/v1/token?grant_type=password")
     @Headers("Content-Type: application/json")
     Call<AuthResponse> loginUser(
-            @Header("apikey") String apiKey,
-            @Body JsonObject body // Login vẫn dùng JsonObject body là ổn
-    );
-
-    // 2. LẤY DANH SÁCH TASK
-    @GET("rest/v1/tasks?select=*")
-    Call<List<Task>> getTasks(
-            @Header("apikey") String apiKey,
-            @Header("Authorization") String token,
-            @Query("owner_id") String ownerId
-    );
-    @GET("rest/v1/tasks")
-    Call<List<Task>> getTasks(
-            @Header("apikey") String apiKey,
-            @Header("Authorization") String token,
-            @Query("course_id") String courseIdQuery, // Ví dụ: "eq.uuid-cua-course"
-            @Query("select") String select, // Thường dùng "*"
-            @Query("order") String order    // Ví dụ: "due_date.asc"
-    );
-    // 1. Tìm Profile theo user_code (MSSV)
-    @GET("rest/v1/profiles")
-    Call<List<Profile>> getProfileByCode(
-            @Header("apikey") String apiKey,
-            @Header("Authorization") String token,
-            @Query("user_code") String userCode
-    );
-
-    // 2. Thêm sinh viên vào lớp (Ghi vào bảng enrollments)
-    @POST("rest/v1/enrollments")
-    Call<Void> enrollStudent(
-            @Header("apikey") String apiKey,
-            @Header("Authorization") String token,
-            @Body Enrollment enrollment // Đảm bảo bạn đã tạo file Entity Enrollment.java ở bước trước
-    );
-
-    // 3. TẠO TASK MỚI
-    @POST("rest/v1/tasks")
-    @Headers({"Prefer: return=representation", "Content-Type: application/json"})
-    Call<List<Task>> createTask(
-            @Header("apikey") String apiKey,
-            @Header("Authorization") String token,
-            @Body Task task
-    );
-
-    // 5. LẤY KHÓA HỌC
-    //Dùng cho teacher, chỉ lấy lớp do mình dạy
-    @GET("rest/v1/courses_with_stats?select=*")
-    Call<List<Course>> getCourses(
-            @Header("apikey") String apiKey,
-            @Header("Authorization") String token,
-            @Query("teacher_id") String teacherId
-    );
-    @GET("rest/v1/tasks?select=*")
-    Call<List<Task>> getTasksByCourse(
-            @Header("apikey") String apiKey,
-            @Header("Authorization") String token,
-            @Query("course_id") String courseId
-    );
-
-    @POST("rest/v1/courses")
-    Call<Void> createCourse(
-            @Header("apikey") String apiKey,
-            @Header("Authorization") String token,
-            @Body Course course
-    );
-
-    // 6. ĐĂNG KÝ (Signup giữ JsonObject body là hợp lý vì logic đơn giản)
-    @POST("auth/v1/signup")
-    @Headers("Content-Type: application/json")
-    Call<AuthResponse> signUpUser(
-            @Header("apikey") String apiKey,
             @Body JsonObject body
     );
 
-    // 7. INSERT PROFILE
+    // Đăng ký
+    @POST("auth/v1/signup")
+    @Headers("Content-Type: application/json")
+    Call<AuthResponse> signUpUser(
+            @Body JsonObject body
+    );
+
+    // ===========================
+    // 2. PROFILES (Thông tin người dùng)
+    // ===========================
+
+    // Lấy Profile theo ID
+    @GET("rest/v1/profiles?select=*")
+    Call<List<Profile>> getProfile(
+            @Header("Authorization") String token,
+            @Query("id") String queryId // Cú pháp: "eq.uuid"
+    );
+
+    // Tìm Profile theo MSSV (user_code)
+    @GET("rest/v1/profiles")
+    Call<List<Profile>> getProfileByCode(
+            @Header("Authorization") String token,
+            @Query("user_code") String userCode // Cú pháp: "eq.mssv"
+    );
+
+    // Tạo mới Profile (Sau khi đăng ký thành công)
     @POST("rest/v1/profiles")
     @Headers({"Prefer: return=minimal", "Content-Type: application/json"})
     Call<Void> insertProfile(
-            @Header("apikey") String apiKey,
             @Header("Authorization") String token,
             @Body Profile profile
     );
 
-    // 8. LẤY PROFILE
-    @GET("rest/v1/profiles?select=*")
-    Call<List<Profile>> getProfile(
-            @Header("apikey") String apiKey,
-            @Header("Authorization") String token,
-            @Query("id") String queryId
-    );
-
-    // 9. UPDATE PROFILE
+    // Cập nhật Profile
     @PATCH("rest/v1/profiles")
     @Headers({"Prefer: return=minimal", "Content-Type: application/json"})
     Call<Void> updateProfile(
-            @Header("apikey") String apiKey,
             @Header("Authorization") String token,
-            @Query("id") String queryId,
-            @Body JsonObject body // <--- Thay Profile bằng JsonObject
+            @Query("id") String queryId, // Cú pháp: "eq.uuid"
+            @Body JsonObject body
     );
 
-    // 10. UPDATE TASK
-    @PATCH("rest/v1/tasks")
-    @Headers({"Prefer: return=minimal", "Content-Type: application/json"})
-    Call<Void> updateTask(
-            @Header("apikey") String apiKey,
+    // ===========================
+    // 3. COURSES (Khóa học)
+    // ===========================
+
+    // Lấy danh sách khóa học (Teacher: lấy lớp mình dạy)
+    @GET("rest/v1/courses_with_stats?select=*")
+    Call<List<Course>> getCourses(
             @Header("Authorization") String token,
-            @Query("id") String taskId,
+            @Query("teacher_id") String teacherId // Cú pháp: "eq.uuid"
+    );
+
+    // Tạo khóa học mới
+    @POST("rest/v1/courses")
+    Call<Void> createCourse(
+            @Header("Authorization") String token,
+            @Body Course course
+    );
+
+    // Student: Lấy danh sách khóa học đã tham gia (Dùng RPC function cho bảo mật và gọn)
+    @POST("rest/v1/rpc/get_student_courses")
+    Call<List<Course>> getStudentCoursesRPC(
+            @Header("Authorization") String token,
+            @Body JsonObject body // {"sid": "uuid"}
+    );
+
+    // ===========================
+    // 4. ENROLLMENTS (Quản lý sinh viên trong lớp)
+    // ===========================
+
+    // Thêm sinh viên vào lớp
+    @POST("rest/v1/enrollments")
+    Call<Void> enrollStudent(
+            @Header("Authorization") String token,
+            @Body Enrollment enrollment
+    );
+
+    // Lấy danh sách sinh viên trong lớp (Kết quả trả về lồng nhau)
+    // Sử dụng cho màn hình CourseStudentsFragment
+    @GET("rest/v1/enrollments?select=profiles(*)")
+    Call<List<EnrollmentResponse>> getStudentsInCourse(
+            @Header("Authorization") String token,
+            @Query("course_id") String courseId // Cú pháp: "eq.uuid"
+    );
+
+    // ===========================
+    // 5. TASKS (Bài tập)
+    // ===========================
+
+    // Lấy danh sách Task (Tổng quát, lọc theo Course ID)
+    @GET("rest/v1/tasks")
+    Call<List<Task>> getTasks(
+            @Header("Authorization") String token,
+            @Query("course_id") String courseIdQuery, // Cú pháp: "eq.uuid"
+            @Query("select") String select,           // Thường là "*"
+            @Query("order") String order              // Ví dụ: "due_date.asc"
+    );
+    @GET("rest/v1/tasks?select=*")
+    Call<List<Task>> getTasksByCourse(
+            @Header("Authorization") String token,
+            @Query("course_id") String courseId // Cú pháp query: "eq.uuid"
+    );
+    // Tạo Task mới
+    @POST("rest/v1/tasks")
+    @Headers({"Prefer: return=representation", "Content-Type: application/json"})
+    Call<List<Task>> createTask(
+            @Header("Authorization") String token,
             @Body Task task
     );
 
-    // 11. DELETE TASK
+    // Cập nhật Task
+    @PATCH("rest/v1/tasks")
+    @Headers({"Prefer: return=minimal", "Content-Type: application/json"})
+    Call<Void> updateTask(
+            @Header("Authorization") String token,
+            @Query("id") String taskId, // Cú pháp: "eq.uuid"
+            @Body Task task
+    );
+
+    // Xóa Task
     @DELETE("rest/v1/tasks")
     Call<Void> deleteTask(
-            @Header("apikey") String apiKey,
             @Header("Authorization") String token,
-            @Query("id") String taskId
+            @Query("id") String taskId // Cú pháp: "eq.uuid"
     );
 
-    // 12. LẤY SINH VIÊN TRONG LỚP (Dùng cho màn hình fragment_teacher_students)
-    // Lý do: Supabase trả về dạng lồng nhau [{"profiles": {...}}]
-    @GET("rest/v1/enrollments?select=profiles(*)")
-    Call<List<EnrollmentResponse>> getStudentsInCourse(
-            @Header("apikey") String apiKey,
-            @Header("Authorization") String token,
-            @Query("course_id") String courseId
-    );
-    @POST("rest/v1/rpc/get_student_courses") //Dùng trong fragment_course của student
-    Call<List<Course>> getStudentCoursesRPC(
-            @Header("apikey") String apiKey,
-            @Header("Authorization") String token,
-            @Body JsonObject body // Body sẽ chứa tham số json: {"sid": "uuid..."}
-    );
+    // ===========================
+    // 6. STORAGE (File)
+    // ===========================
 
-    @GET("student_course_details")
-    Call<List<Course>> getStudentCourses(
-            @Header("apikey") String apiKey,
-            @Header("Authorization") String token,
-            @Query("student_id") String studentIdQuery // Ví dụ: "eq.UUID"
-    );
-    // 13. UPLOAD FILE
+    // Upload file
     @Multipart
     @POST("storage/v1/object/{bucket}/{path}")
     Call<ResponseBody> uploadFile(
-            @Header("apikey") String apiKey,
             @Header("Authorization") String token,
             @Header("x-upsert") String upsert,
             @Path("bucket") String bucket,
@@ -184,11 +181,10 @@ public interface SupabaseService {
             @Part MultipartBody.Part file
     );
 
-    // 14. LIST FILES
+    // Lấy danh sách file
     @POST("storage/v1/object/list/{bucket}")
     @Headers("Content-Type: application/json")
     Call<List<FileObject>> listFiles(
-            @Header("apikey") String apiKey,
             @Header("Authorization") String token,
             @Path("bucket") String bucket,
             @Body JsonObject body

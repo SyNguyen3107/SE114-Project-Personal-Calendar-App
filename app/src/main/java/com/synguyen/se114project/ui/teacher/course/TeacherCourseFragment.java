@@ -130,7 +130,7 @@ public class TeacherCourseFragment extends Fragment {
         SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
 
         // API cũ: "courses_with_stats"
-        service.getCourses(BuildConfig.SUPABASE_KEY, "Bearer " + token, "eq." + userId)
+        service.getCourses( "Bearer " + token, "eq." + userId)
                 .enqueue(new Callback<List<Course>>() {
                     @Override
                     public void onResponse(Call<List<Course>> call, Response<List<Course>> response) {
@@ -207,7 +207,7 @@ public class TeacherCourseFragment extends Fragment {
         course.setDescription(description);
         course.setTeacherId(userId);
 
-        service.createCourse(BuildConfig.SUPABASE_KEY, "Bearer " + token, course)
+        service.createCourse( "Bearer " + token, course)
                 .enqueue(new Callback<Void>() {
                     @Override
                     public void onResponse(Call<Void> call, Response<Void> response) {

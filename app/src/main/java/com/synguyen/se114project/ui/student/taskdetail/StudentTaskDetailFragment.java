@@ -79,6 +79,8 @@ public class StudentTaskDetailFragment extends Fragment {
     private Uri selectedFileUri;
     private Button btnDeleteTask;
 
+    private boolean isFromCourseDetail = false;
+
     // File Selection Launcher
     private final ActivityResultLauncher<String> pickFileLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
@@ -96,12 +98,22 @@ public class StudentTaskDetailFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // --- KHU VỰC SỬA LỖI VÀ LOG ---
         if (getArguments() != null) {
             taskId = getArguments().getString("taskId");
             taskTitle = getArguments().getString("taskTitle");
-            // Optionally load initial description from arguments if passed
-            // currentDescription = getArguments().getString("taskDescription");
+
+            // [QUAN TRỌNG] Dòng này bị thiếu trong file cũ của bạn
+            isFromCourseDetail = getArguments().getBoolean("IS_FROM_COURSE_DETAIL", false);
+
+            // LOG KIỂM TRA: Xem fragment có nhận được cờ hiệu 'true' không
+            android.util.Log.e("DEBUG_BACK", "1. onCreate chạy. taskId: " + taskId);
+            android.util.Log.e("DEBUG_BACK", "2. onCreate chạy. Giá trị isFromCourseDetail nhận được: " + isFromCourseDetail);
+        } else {
+            android.util.Log.e("DEBUG_BACK", "LỖI: getArguments() bị NULL!");
         }
+        // -----------------------------
     }
 
     @Nullable
@@ -159,7 +171,31 @@ public class StudentTaskDetailFragment extends Fragment {
         }
 
         // 5. Events
-        btnBack.setOnClickListener(v -> Navigation.findNavController(view).navigateUp());
+        btnBack.setOnClickListener(v -> {
+            android.util.Log.e("DEBUG_BACK", "3. Đã bấm nút Back.");
+            android.util.Log.e("DEBUG_BACK", "4. Kiểm tra biến isFromCourseDetail: " + isFromCourseDetail);
+
+            if (isFromCourseDetail) {
+                android.util.Log.d("DEBUG_BACK", "-> Thực hiện: popBackStack theo Tag 'TASK_DETAIL_SESSION'");
+                if (getActivity() != null) {
+                    // --- [SỬA DÒNG NÀY] ---
+                    // Gọi đích danh giao dịch cần đóng và xóa nó ngay lập tức
+                    getActivity().getSupportFragmentManager().popBackStack(
+                            "TASK_DETAIL_SESSION",
+                            androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE
+                    );
+                    // ----------------------
+                }
+            } else {
+                // Trường hợp 2: Mở từ Home -> Dùng Navigation Controller
+                android.util.Log.e("DEBUG_BACK", "-> LOGIC: Chạy Navigation.navigateUp (Quay lại Home)");
+                try {
+                    Navigation.findNavController(v).navigateUp();
+                } catch (Exception e) {
+                    if (getActivity() != null) getActivity().onBackPressed();
+                }
+            }
+        });
 
         if (btnEditSubtask != null) {
             btnEditSubtask.setOnClickListener(v -> showEditSubtasksDialog());
@@ -207,7 +243,7 @@ public class StudentTaskDetailFragment extends Fragment {
         SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
 
         // Gọi API DELETE: tasks?id=eq.{taskId}
-        service.deleteTask(BuildConfig.SUPABASE_KEY, "Bearer " + token, "eq." + taskId)
+        service.deleteTask("Bearer " + token, "eq." + taskId)
                 .enqueue(new Callback<Void>() {
                     @Override
                     public void onResponse(Call<Void> call, Response<Void> response) {
@@ -301,7 +337,7 @@ public class StudentTaskDetailFragment extends Fragment {
         body.addProperty("prefix", "assign_" + taskId + "_" + userId);
 
         SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
-        service.listFiles(BuildConfig.SUPABASE_KEY, "Bearer " + token, "assignments", body)
+        service.listFiles("Bearer " + token, "assignments", body)
                 .enqueue(new Callback<List<FileObject>>() {
                     @Override
                     public void onResponse(Call<List<FileObject>> call, Response<List<FileObject>> response) {
@@ -330,7 +366,7 @@ public class StudentTaskDetailFragment extends Fragment {
         updateData.setDescription(newDesc);
 
         // 3. Gọi API
-        service.updateTask(BuildConfig.SUPABASE_KEY, "Bearer " + token, "eq." + taskId, updateData)
+        service.updateTask( "Bearer " + token, "eq." + taskId, updateData)
                 .enqueue(new Callback<Void>() {
                     @Override
                     public void onResponse(Call<Void> call, Response<Void> response) {
@@ -392,7 +428,7 @@ public class StudentTaskDetailFragment extends Fragment {
             MultipartBody.Part body = MultipartBody.Part.createFormData("file", serverFileName, requestFile);
 
             SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
-            service.uploadFile(BuildConfig.SUPABASE_KEY, "Bearer " + token, "true", "assignments", serverFileName, body)
+            service.uploadFile( "Bearer " + token, "true", "assignments", serverFileName, body)
                     .enqueue(new Callback<ResponseBody>() {
                         @Override
                         public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {

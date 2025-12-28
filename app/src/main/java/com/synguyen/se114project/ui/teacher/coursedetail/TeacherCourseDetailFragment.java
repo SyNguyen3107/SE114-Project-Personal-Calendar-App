@@ -131,7 +131,7 @@ public class TeacherCourseDetailFragment extends Fragment {
     private void findStudentByCode(String code) {
         SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
 
-        service.getProfileByCode(BuildConfig.SUPABASE_KEY, "Bearer " + token, "eq." + code)
+        service.getProfileByCode("Bearer " + token, "eq." + code)
                 .enqueue(new Callback<List<Profile>>() {
                     @Override
                     public void onResponse(Call<List<Profile>> call, Response<List<Profile>> response) {
@@ -165,7 +165,7 @@ public class TeacherCourseDetailFragment extends Fragment {
         SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
         Enrollment enrollment = new Enrollment(courseId, studentId);
 
-        service.enrollStudent(BuildConfig.SUPABASE_KEY, "Bearer " + token, enrollment)
+        service.enrollStudent("Bearer " + token, enrollment)
                 .enqueue(new Callback<Void>() {
                     @Override
                     public void onResponse(Call<Void> call, Response<Void> response) {

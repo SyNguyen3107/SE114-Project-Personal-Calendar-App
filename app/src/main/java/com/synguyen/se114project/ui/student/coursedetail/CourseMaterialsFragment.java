@@ -1,7 +1,7 @@
 package com.synguyen.se114project.ui.student.coursedetail;
 
-import android.content.Intent;
-import android.net.Uri;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,8 +16,10 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.synguyen.se114project.BuildConfig;
 import com.synguyen.se114project.R;
 import com.synguyen.se114project.ui.adapter.MaterialAdapter;
+import com.synguyen.se114project.utils.FileUtils;
 import com.synguyen.se114project.viewmodel.student.CourseViewModel;
 
 public class CourseMaterialsFragment extends Fragment {
@@ -48,8 +50,7 @@ public class CourseMaterialsFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Bạn cần tạo file xml layout cho fragment này: fragment_course_materials
-        // Hoặc dùng tạm fragment_course_tasks nếu lười tạo mới (nhưng nên tạo mới cho chuẩn)
+        // Đảm bảo bạn đã có file layout này
         return inflater.inflate(R.layout.fragment_course_materials, container, false);
     }
 
@@ -57,9 +58,9 @@ public class CourseMaterialsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // 1. Setup RecyclerView
-        RecyclerView rv = view.findViewById(R.id.rvMaterials); // Nhớ tạo ID này trong XML
-        tvEmpty = view.findViewById(R.id.tvEmptyMaterials);    // Nhớ tạo ID này trong XML
+        // 1. Setup UI
+        RecyclerView rv = view.findViewById(R.id.rvMaterials);
+        tvEmpty = view.findViewById(R.id.tvEmptyMaterials);
 
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
         mAdapter = new MaterialAdapter();
@@ -68,7 +69,7 @@ public class CourseMaterialsFragment extends Fragment {
         // 2. Setup ViewModel
         mViewModel = new ViewModelProvider(this).get(CourseViewModel.class);
 
-        // 3. Observe Data
+        // 3. Quan sát dữ liệu (Observe)
         mViewModel.getMaterials().observe(getViewLifecycleOwner(), files -> {
             if (files == null || files.isEmpty()) {
                 tvEmpty.setVisibility(View.VISIBLE);
@@ -80,22 +81,36 @@ public class CourseMaterialsFragment extends Fragment {
             }
         });
 
-        // 4. Load Data
+        // 4. Quan sát lỗi (Optional - nếu ViewModel có biến error)
+        // mViewModel.getError().observe(...);
+
+        // 5. Load Data
         if (mCourseId != null) {
-            mViewModel.loadMaterials(mCourseId);
+            // --- SỬA ĐỔI QUAN TRỌNG: Truyền Token vào hàm load ---
+            String token = getUserToken();
+            mViewModel.loadMaterials(token, mCourseId);
         }
 
-        // 5. Click Download (Mở trình duyệt)
+        // 6. Click Download
         mAdapter.setOnItemClickListener(file -> {
-            // Logic mở link Supabase Storage
-            // Cấu trúc link public: https://<project-id>.supabase.co/storage/v1/object/public/materials/<prefix>/<name>
-            // Hoặc bạn có thể dùng hàm getPublicUrl trong Repository nếu muốn code xịn hơn.
-
-            Toast.makeText(getContext(), "Đang mở: " + file.getName(), Toast.LENGTH_SHORT).show();
-            // String url = ...;
-            // Intent i = new Intent(Intent.ACTION_VIEW);
-            // i.setData(Uri.parse(url));
-            // startActivity(i);
+            if (getContext() != null) {
+                // Lưu ý: Nếu bucket là private, bạn cần token để tải.
+                // Hàm downloadCourseMaterial cần được kiểm tra lại.
+                FileUtils.downloadCourseMaterial(getContext(), mCourseId, file.getName());
+            }
         });
+    }
+
+    // Hàm lấy Token
+    private String getUserToken() {
+        if (getContext() == null) return "Bearer " + BuildConfig.SUPABASE_KEY;
+
+        SharedPreferences prefs = getContext().getSharedPreferences("MY_APP_PREFS", Context.MODE_PRIVATE);
+        String token = prefs.getString("ACCESS_TOKEN", "");
+
+        if (token.isEmpty()) {
+            return "Bearer " + BuildConfig.SUPABASE_KEY; // Fallback dùng Key mặc định
+        }
+        return "Bearer " + token;
     }
 }
