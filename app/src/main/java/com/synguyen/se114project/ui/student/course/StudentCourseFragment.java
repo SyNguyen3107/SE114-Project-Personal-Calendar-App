@@ -74,6 +74,10 @@ public class StudentCourseFragment extends Fragment {
         SharedPreferences prefs = requireActivity().getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
         String userId = prefs.getString("USER_ID", null);
 
+        // Ánh xạ views cho progress / empty
+        progressBar = view.findViewById(R.id.progressBar);
+        tvEmpty = view.findViewById(R.id.tvEmpty);
+
         // 5. Quan sát dữ liệu từ Room (Offline-first)
         mViewModel.getAllCourses().observe(getViewLifecycleOwner(), courses -> {
             // Tắt loading khi có dữ liệu

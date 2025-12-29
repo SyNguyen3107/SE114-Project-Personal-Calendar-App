@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dp">
+
+    <!-- Bubble container; we will adjust alignment in adapter -->
+    <LinearLayout
+        android:id="@+id/bubbleWrapper"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="start">
+
+        <LinearLayout
+            android:id="@+id/bubble"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bubble_left"
+            android:padding="8dp">
+
+            <TextView
+                android:id="@+id/tvContent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="#000"
+                android:maxWidth="240dp" />
+
+            <TextView
+                android:id="@+id/tvTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="10sp"
+                android:textColor="#fff"
+                android:layout_marginTop="4dp" />
+
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/ivHeart"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_marginStart="6dp"
+            android:layout_marginLeft="6dp"
+            android:visibility="gone"
+            android:src="@drawable/ic_heart_filled" />
+
+    </LinearLayout>
+
+    <!-- Large animated heart shown on double-tap -->
+    <ImageView
+        android:id="@+id/ivHeartBig"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_gravity="center"
+        android:scaleX="0"
+        android:scaleY="0"
+        android:alpha="0"
+        android:visibility="gone"
+        android:src="@drawable/ic_heart_filled" />
+
+</FrameLayout>

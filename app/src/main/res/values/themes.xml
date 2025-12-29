@@ -2,15 +2,28 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.SE114Project" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item>
+        <item name="colorOnPrimary">@color/colorOnPrimary</item>
+        
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/colorSecondary</item>
+        <item name="colorOnSecondary">@color/white</item>
+        
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">@color/colorPrimary</item>
     </style>
-    <style name="CircleImage" parent="">
+
+    <style name="Theme.SE114Project" parent="Base.Theme.SE114Project" />
+
+    <!-- Style cho ảnh bo tròn (Circle Image) -->
+    <style name="CircleImage">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
     </style>
+
     <style name="CircleImageStyle">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
     </style>
-    <style name="Theme.SE114Project" parent="Base.Theme.SE114Project" />
 </resources>

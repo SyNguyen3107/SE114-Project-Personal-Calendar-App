@@ -32,6 +32,8 @@ android {
 
         buildConfigField("String", "SUPABASE_URL", localProperties.getProperty("SUPABASE_URL"))
         buildConfigField("String", "SUPABASE_KEY", localProperties.getProperty("SUPABASE_KEY"))
+        // Optional: local Socket server URL for development (e.g., http://10.0.2.2:3000)
+        buildConfigField("String", "SOCKET_SERVER_URL", localProperties.getProperty("SOCKET_SERVER_URL"))
     }
 
     buildTypes {
@@ -53,6 +55,7 @@ android {
 }
 
 dependencies {
+    implementation("com.google.android.material:material:1.12.0")
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
@@ -83,6 +86,10 @@ dependencies {
 
     // Thêm Logging để xem API chạy thế nào (Debug cực tiện)
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+
+    // Socket.IO client (Android)
+    implementation("io.socket:socket.io-client:2.0.1") // uses engine.io-client and org.json
+    implementation("org.json:json:20230227")
 
     implementation("androidx.work:work-runtime:2.9.0")
 }

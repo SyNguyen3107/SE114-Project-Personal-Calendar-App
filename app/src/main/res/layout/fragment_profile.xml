@@ -17,23 +17,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/btnLogout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:contentDescription="Logout"
-        android:focusable="true"
-        android:minHeight="48dp"
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Back"
         android:padding="8dp"
-        android:text="Log out"
-        android:textColor="#FF3D00"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="@id/tvTitleProfile"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/tvTitleProfile" />
+        android:src="@drawable/ic_baseline_arrow_back_24"
+        app:tint="@color/black"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/imgAvatar"
@@ -42,12 +36,12 @@
         android:layout_marginTop="32dp"
         android:padding="2dp"
         android:scaleType="centerCrop"
-        android:src="@drawable/ic_launcher_background"
+        android:src="@drawable/logo"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvTitleProfile"
         app:shapeAppearanceOverlay="@style/CircleImage"
-        app:strokeColor="#6200EE"
+        app:strokeColor="@color/holo_blue_dark"
         app:strokeWidth="2dp" />
 
     <ImageView
@@ -55,6 +49,7 @@
         android:layout_width="36dp"
         android:layout_height="36dp"
         android:background="@drawable/bg_button"
+        android:backgroundTint="@color/holo_blue_dark"
         android:padding="6dp"
         android:src="@android:drawable/ic_menu_camera"
         app:layout_constraintBottom_toBottomOf="@id/imgAvatar"
@@ -94,13 +89,43 @@
             android:inputType="none" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- HIỂN THỊ MÃ NGƯỜI DÙNG (USER CODE) -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/layoutUserCode"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:hint="User ID Code"
+        app:startIconDrawable="@drawable/ic_account"
+        app:layout_constraintTop_toBottomOf="@id/layoutEmail">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etUserCode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:focusable="false"
+            android:inputType="none"
+            android:textColor="@color/holo_blue_dark"
+            android:textStyle="bold" />
+    </com.google.android.material.textfield.TextInputLayout>
+
     <Button
         android:id="@+id/btnSaveProfile"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
-        android:backgroundTint="#6200EE"
+        android:layout_marginBottom="130dp"
+        android:backgroundTint="@color/holo_blue_dark"
         android:text="Save Profile"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <Button
+        android:id="@+id/btnLogout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="84dp"
+        android:backgroundTint="#c00"
+        android:text="Log out"
         app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -31,5 +31,13 @@ public class TeacherMainActivity extends AppCompatActivity {
             // Lệnh này thay thế hoàn toàn Adapter và setOnItemSelectedListener thủ công
             NavigationUI.setupWithNavController(bottomNav, navController);
         }
+
+        // Fab: mở danh sách Community
+//        com.google.android.material.floatingactionbutton.FloatingActionButton fab = findViewById(R.id.fabCommunity);
+//        if (fab != null) {
+//            fab.setOnClickListener(v -> {
+//                startActivity(new android.content.Intent(TeacherMainActivity.this, com.synguyen.se114project.ui.community.CommunityListActivity.class));
+//            });
+//        }
     }
 }

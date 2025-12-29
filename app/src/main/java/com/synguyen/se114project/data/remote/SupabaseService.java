@@ -64,6 +64,12 @@ public interface SupabaseService {
             @Query("user_code") String userCode // Cú pháp: "eq.mssv"
     );
 
+    // LẤY TẤT CẢ SINH VIÊN (Để chọn vào lớp)
+    @GET("rest/v1/profiles?role=eq.student&select=*")
+    Call<List<Profile>> getAllStudents(
+            @Header("Authorization") String token
+    );
+
     // Tạo mới Profile (Sau khi đăng ký thành công)
     @POST("rest/v1/profiles")
     @Headers({"Prefer: return=minimal", "Content-Type: application/json"})
@@ -72,12 +78,41 @@ public interface SupabaseService {
             @Body Profile profile
     );
 
-    // Cập nhật Profile
+    // ===========================
+    // 7. COMMUNITY (Communities & Messages)
+    // ===========================
+
+    @GET("rest/v1/communities?select=*")
+    Call<List<JsonObject>> getCommunities(
+            @Header("Authorization") String token
+    );
+
+    @POST("rest/v1/communities")
+    @Headers({"Prefer: return=representation", "Content-Type: application/json"})
+    Call<List<JsonObject>> createCommunity(
+            @Header("Authorization") String token,
+            @Body JsonObject body
+    );
+
+    @GET("rest/v1/messages?select=*")
+    Call<List<JsonObject>> getMessagesByCommunity(
+            @Header("Authorization") String token,
+            @Query("community_id") String communityQuery,
+            @Query("order") String order 
+    );
+
+    @retrofit2.http.FormUrlEncoded
+    @POST("auth/v1/token")
+    Call<com.google.gson.JsonObject> refreshToken(
+            @retrofit2.http.Field("grant_type") String grantType,
+            @retrofit2.http.Field("refresh_token") String refreshToken
+    );
+
     @PATCH("rest/v1/profiles")
     @Headers({"Prefer: return=minimal", "Content-Type: application/json"})
     Call<Void> updateProfile(
             @Header("Authorization") String token,
-            @Query("id") String queryId, // Cú pháp: "eq.uuid"
+            @Query("id") String queryId, 
             @Body JsonObject body
     );
 
@@ -85,64 +120,73 @@ public interface SupabaseService {
     // 3. COURSES (Khóa học)
     // ===========================
 
-    // Lấy danh sách khóa học (Teacher: lấy lớp mình dạy)
     @GET("rest/v1/courses_with_stats?select=*")
     Call<List<Course>> getCourses(
             @Header("Authorization") String token,
-            @Query("teacher_id") String teacherId // Cú pháp: "eq.uuid"
+            @Query("teacher_id") String teacherId 
     );
 
-    // Tạo khóa học mới
     @POST("rest/v1/courses")
+    @Headers({"Prefer: return=minimal", "Content-Type: application/json"})
     Call<Void> createCourse(
             @Header("Authorization") String token,
             @Body Course course
     );
 
-    // Student: Lấy danh sách khóa học đã tham gia (Dùng RPC function cho bảo mật và gọn)
+    @POST("rest/v1/courses")
+    @Headers({"Prefer: return=minimal", "Content-Type: application/json"})
+    Call<Void> createCourseJson(
+            @Header("Authorization") String token,
+            @Body com.google.gson.JsonObject body
+    );
+
     @POST("rest/v1/rpc/get_student_courses")
     Call<List<Course>> getStudentCoursesRPC(
             @Header("Authorization") String token,
-            @Body JsonObject body // {"sid": "uuid"}
+            @Body JsonObject body 
     );
 
     // ===========================
     // 4. ENROLLMENTS (Quản lý sinh viên trong lớp)
     // ===========================
 
-    // Thêm sinh viên vào lớp
     @POST("rest/v1/enrollments")
+    @Headers({"Prefer: resolution=ignore-duplicates", "Content-Type: application/json"})
     Call<Void> enrollStudent(
             @Header("Authorization") String token,
             @Body Enrollment enrollment
     );
 
-    // Lấy danh sách sinh viên trong lớp (Kết quả trả về lồng nhau)
-    // Sử dụng cho màn hình CourseStudentsFragment
+    // Enroll nhiều sinh viên - Thêm resolution=ignore-duplicates để bỏ qua 409
+    @POST("rest/v1/enrollments")
+    @Headers({"Prefer: resolution=ignore-duplicates", "Content-Type: application/json"})
+    Call<Void> enrollMultipleStudents(
+            @Header("Authorization") String token,
+            @Body List<Enrollment> enrollments
+    );
+
     @GET("rest/v1/enrollments?select=profiles(*)")
     Call<List<EnrollmentResponse>> getStudentsInCourse(
             @Header("Authorization") String token,
-            @Query("course_id") String courseId // Cú pháp: "eq.uuid"
+            @Query("course_id") String courseId 
     );
 
     // ===========================
     // 5. TASKS (Bài tập)
     // ===========================
 
-    // Lấy danh sách Task (Tổng quát, lọc theo Course ID)
     @GET("rest/v1/tasks")
     Call<List<Task>> getTasks(
             @Header("Authorization") String token,
-            @Query("course_id") String courseIdQuery, // Cú pháp: "eq.uuid"
-            @Query("select") String select,           // Thường là "*"
-            @Query("order") String order              // Ví dụ: "due_date.asc"
+            @Query("course_id") String courseIdQuery, 
+            @Query("select") String select,           
+            @Query("order") String order              
     );
     @GET("rest/v1/tasks?select=*")
     Call<List<Task>> getTasksByCourse(
             @Header("Authorization") String token,
-            @Query("course_id") String courseId // Cú pháp query: "eq.uuid"
+            @Query("course_id") String courseId 
     );
-    // Tạo Task mới
     @POST("rest/v1/tasks")
     @Headers({"Prefer: return=representation", "Content-Type: application/json"})
     Call<List<Task>> createTask(
@@ -150,27 +194,24 @@ public interface SupabaseService {
             @Body Task task
     );
 
-    // Cập nhật Task
     @PATCH("rest/v1/tasks")
     @Headers({"Prefer: return=minimal", "Content-Type: application/json"})
     Call<Void> updateTask(
             @Header("Authorization") String token,
-            @Query("id") String taskId, // Cú pháp: "eq.uuid"
+            @Query("id") String taskId, 
             @Body Task task
     );
 
-    // Xóa Task
     @DELETE("rest/v1/tasks")
     Call<Void> deleteTask(
             @Header("Authorization") String token,
-            @Query("id") String taskId // Cú pháp: "eq.uuid"
+            @Query("id") String taskId 
     );
 
     // ===========================
     // 6. STORAGE (File)
     // ===========================
 
-    // Upload file
     @Multipart
     @POST("storage/v1/object/{bucket}/{path}")
     Call<ResponseBody> uploadFile(
@@ -181,7 +222,6 @@ public interface SupabaseService {
             @Part MultipartBody.Part file
     );
 
-    // Lấy danh sách file
     @POST("storage/v1/object/list/{bucket}")
     @Headers("Content-Type: application/json")
     Call<List<FileObject>> listFiles(

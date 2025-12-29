@@ -1,74 +1,96 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="16dp"
     android:layout_marginVertical="8dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="4dp">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:strokeWidth="0dp"
+    app:cardBackgroundColor="@color/white">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp">
 
+        <!-- Avatar: Hiện chữ cái đầu hoặc ảnh -->
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/imgStudentAvatar"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:src="@drawable/logo"
+            android:scaleType="centerCrop"
+            android:background="#F1F4FF"
+            android:padding="2dp"
+            app:strokeColor="@color/holo_blue_dark"
+            app:strokeWidth="1dp"
+            app:shapeAppearanceOverlay="@style/CircleImage"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <!-- Chữ cái đại diện (Fallback khi không có ảnh) -->
         <TextView
             android:id="@+id/tvAvatarChar"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="@drawable/bg_circle_avatar"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
             android:gravity="center"
-            android:text="A"
-            android:textColor="#FFFFFF"
+            android:text="K"
+            android:textColor="@color/holo_blue_dark"
             android:textSize="20sp"
             android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="@id/imgStudentAvatar"
+            app:layout_constraintBottom_toBottomOf="@id/imgStudentAvatar"
+            app:layout_constraintStart_toStartOf="@id/imgStudentAvatar"
+            app:layout_constraintEnd_toEndOf="@id/imgStudentAvatar" />
 
-        <TextView
-            android:id="@+id/tvStudentName"
+        <!-- Info Section -->
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:orientation="vertical"
             android:layout_marginStart="16dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="#000000"
-            android:textSize="16sp"
-            android:textStyle="bold"
+            app:layout_constraintStart_toEndOf="@id/imgStudentAvatar"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/tvAvatarChar"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="Nguyễn Văn A" />
+            app:layout_constraintBottom_toBottomOf="parent">
 
-        <TextView
-            android:id="@+id/tvStudentCode"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="#FF5722"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="@id/tvStudentName"
-            app:layout_constraintTop_toBottomOf="@id/tvStudentName"
-            tools:text="MSSV: 20520000" />
+            <TextView
+                android:id="@+id/tvStudentName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Student Name"
+                android:textColor="@color/black"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:ellipsize="end"
+                android:singleLine="true"/>
 
-        <TextView
-            android:id="@+id/tvStudentEmail"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="#757575"
-            android:textSize="14sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="@id/tvStudentName"
-            app:layout_constraintTop_toBottomOf="@id/tvStudentCode"
-            tools:text="nguyenvana@gm.uit.edu.vn" />
+            <TextView
+                android:id="@+id/tvStudentCode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="MSSV: SV12345678"
+                android:textColor="#FF5722"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:layout_marginTop="2dp"/>
+
+            <TextView
+                android:id="@+id/tvStudentEmail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="student@email.com"
+                android:textColor="#757575"
+                android:textSize="13sp"
+                android:layout_marginTop="1dp"
+                android:ellipsize="end"
+                android:maxLines="1"/>
+
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

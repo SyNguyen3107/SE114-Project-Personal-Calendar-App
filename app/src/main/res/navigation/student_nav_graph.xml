@@ -95,5 +95,14 @@
         <action
             android:id="@+id/action_community_to_profile"
             app:destination="@id/profileFragment" />
+        <action
+            android:id="@+id/action_community_to_chat"
+            app:destination="@id/communityChatFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/communityChatFragment"
+        android:name="com.synguyen.se114project.ui.community.CommunityChatFragment"
+        android:label="Community Chat"
+        tools:layout="@layout/fragment_community_chat" />
 </navigation>

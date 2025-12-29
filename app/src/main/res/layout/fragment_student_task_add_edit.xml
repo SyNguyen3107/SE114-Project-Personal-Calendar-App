@@ -4,9 +4,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF">
+    android:background="#F8F9FD">
 
-    <!-- ScrollView chiếm toàn bộ màn hình -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -18,68 +17,79 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp"
-            android:paddingBottom="100dp"> <!-- Padding dưới lớn để nút không bị che bởi BottomNav -->
+            android:padding="20dp"
+            android:paddingBottom="120dp">
 
             <!-- HEADER -->
-            <LinearLayout
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="24dp">
+                android:layout_marginBottom="32dp">
 
                 <ImageView
                     android:id="@+id/btnBack"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="8dp"
                     android:src="@drawable/ic_arrow_back"
-                    android:contentDescription="Back"
                     app:tint="@color/black" />
 
                 <TextView
                     android:id="@+id/tvScreenTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
                     android:text="New Task"
-                    android:textSize="24sp"
+                    android:textSize="20sp"
                     android:textStyle="bold"
-                    android:textColor="@color/black"
-                    android:layout_marginStart="16dp"/>
-            </LinearLayout>
+                    android:textColor="@color/black"/>
+            </RelativeLayout>
 
-            <!-- Title Input -->
+            <!-- Task Title -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/layoutTitle"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:hint="Task Title"
                 android:layout_marginBottom="16dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                app:startIconDrawable="@drawable/ic_check"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Task Title"
-                    android:inputType="textCapSentences"/>
+                    android:inputType="textCapSentences"
+                    android:textColor="@color/black" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Description Input -->
+            <!-- Description -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/layoutSubtitle"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                android:hint="Description"
+                android:layout_marginBottom="20dp"
+                app:startIconDrawable="@drawable/ic_docs"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etSubtitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Description"
                     android:inputType="textMultiLine"
                     android:minLines="3"
-                    android:gravity="top"/>
+                    android:gravity="top"
+                    android:textColor="@color/black" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Date & Time Row -->
@@ -87,84 +97,113 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="24dp">
+                android:layout_marginBottom="20dp">
 
-                <TextView
-                    android:id="@+id/btnDate"
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:padding="12dp"
-                    android:background="@drawable/bg_white_rounded"
-                    android:text="Select Date"
-                    android:gravity="center"
-                    android:layout_marginEnd="8dp"/>
+                    android:layout_marginEnd="8dp"
+                    android:hint="Date"
+                    app:startIconDrawable="@drawable/ic_calendar">
 
-                <TextView
-                    android:id="@+id/btnTime"
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/btnDate"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:focusable="false"
+                        android:text="Select Date"
+                        android:textSize="14sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:padding="12dp"
-                    android:background="@drawable/bg_white_rounded"
-                    android:text="Select Time"
-                    android:gravity="center"
-                    android:layout_marginStart="8dp"/>
+                    android:layout_marginStart="8dp"
+                    android:hint="Time"
+                    app:startIconDrawable="@android:drawable/ic_menu_recent_history">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/btnTime"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:focusable="false"
+                        android:text="Select Time"
+                        android:textSize="14sp" />
+                </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
-            <!-- MỚI: Duration Input -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Duration (minutes)"
-                android:textColor="#757575"
-                android:layout_marginTop="8dp"/>
 
-            <EditText
-                android:id="@+id/etDuration"
+            <!-- Duration -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:hint="25"
-                android:inputType="number"
-                android:textColor="@android:color/black"
-                android:backgroundTint="#E0E0E0"/>
-            <!-- Subtasks Section -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Subtasks"
-                android:textStyle="bold"
-                android:textSize="16sp"
-                android:textColor="@color/black"
-                android:layout_marginBottom="8dp"/>
+                android:hint="Duration (minutes)"
+                android:layout_marginBottom="32dp"
+                app:suffixText="min"
+                app:boxCornerRadiusTopStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusBottomEnd="12dp">
 
-            <TextView
-                android:id="@+id/btnAddSubtask"
-                android:layout_width="wrap_content"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etDuration"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:text="25" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Subtasks Header -->
+            <RelativeLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="+ Add Subtask"
-                android:textColor="#6200EE"
-                android:textStyle="bold"
-                android:padding="8dp"/>
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Subtasks"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:textColor="@color/black"
+                    android:layout_alignParentStart="true" />
+
+                <TextView
+                    android:id="@+id/btnAddSubtask"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="+ Add Task"
+                    android:textColor="@color/holo_blue_dark"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:layout_alignParentEnd="true"
+                    android:background="?attr/selectableItemBackground"
+                    android:padding="4dp"/>
+            </RelativeLayout>
 
             <LinearLayout
                 android:id="@+id/layoutSubtasksContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginTop="8dp"/>
+                android:layout_marginBottom="32dp"/>
 
-            <!-- SỬA LỖI: Đưa nút Save vào trong ScrollView và thêm margin top -->
+            <!-- Save Action -->
             <Button
                 android:id="@+id/btnSave"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="56dp"
                 android:text="Save Task"
-                android:backgroundTint="#6200EE"
+                android:backgroundTint="@color/holo_blue_dark"
                 android:textColor="#FFFFFF"
+                android:textSize="16sp"
                 android:textStyle="bold"
-                android:paddingVertical="12dp"
-                android:layout_marginTop="32dp"/>
+                app:cornerRadius="16dp"
+                android:elevation="4dp"/>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

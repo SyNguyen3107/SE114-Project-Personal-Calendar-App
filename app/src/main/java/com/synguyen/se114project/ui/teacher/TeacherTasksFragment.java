@@ -3,10 +3,14 @@ package com.synguyen.se114project.ui.teacher;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -25,6 +29,8 @@ import com.synguyen.se114project.data.remote.RetrofitClient;
 import com.synguyen.se114project.data.remote.SupabaseService;
 import com.synguyen.se114project.ui.adapter.TeacherTaskAdapter;
 import com.synguyen.se114project.ui.teacher.taskdetail.TeacherTaskDetailFragment;
+import android.util.Log;
+import androidx.navigation.Navigation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +44,7 @@ public class TeacherTasksFragment extends Fragment {
     private String courseId;
     private RecyclerView rcvTasks;
     private TeacherTaskAdapter adapter;
-    private FloatingActionButton fabAdd;
+    private View fabAdd;
     private String token;
     private String userId;
 
@@ -60,75 +66,81 @@ public class TeacherTasksFragment extends Fragment {
 
         rcvTasks.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // Khởi tạo Adapter
         adapter = new TeacherTaskAdapter(new ArrayList<>(), task -> {
-            // Mở màn hình chi tiết (Đảm bảo bạn đã tạo Activity này)
-            Intent intent = new Intent(getContext(), TeacherTaskDetailFragment.class);
-            intent.putExtra("TASK_ID", task.getId());
-            intent.putExtra("TASK_TITLE", task.getTitle());
-            intent.putExtra("TASK_DESC", task.getDescription());
-            intent.putExtra("TASK_DEADLINE", task.getTime());
-            startActivity(intent);
+            try {
+                Bundle bundle = new Bundle();
+                bundle.putString("taskId", task.getId());
+                bundle.putString("taskTitle", task.getTitle());
+                Navigation.findNavController(requireView()).navigate(R.id.teacherTaskDetailFragment, bundle);
+            } catch (Exception e) {
+                Log.e("TeacherTasksFragment", "Error navigating to task detail", e);
+                Toast.makeText(getContext(), "Cannot open task details", Toast.LENGTH_SHORT).show();
+            }
         });
         rcvTasks.setAdapter(adapter);
 
         loadTasks();
 
-        fabAdd.setOnClickListener(v -> showAddTaskDialog());
+        if (fabAdd != null) {
+            fabAdd.setOnClickListener(v -> showAddTaskDialog());
+        }
 
         return view;
     }
 
     private void loadTasks() {
         if (token == null || courseId == null) return;
-
         SupabaseService service = RetrofitClient.getRetrofitInstance().create(SupabaseService.class);
-
-        // SỬA: Thêm "Bearer " trước token và "eq." trước courseId
         service.getTasksByCourse( "Bearer " + token, "eq." + courseId)
                 .enqueue(new Callback<List<Task>>() {
                     @Override
                     public void onResponse(Call<List<Task>> call, Response<List<Task>> response) {
                         if (response.isSuccessful() && response.body() != null) {
-                            List<Task> tasks = response.body();
-                            // QUAN TRỌNG: Phải gọi hàm này để danh sách hiện lên màn hình
-                            adapter.updateData(tasks);
-                        } else {
-                            Toast.makeText(getContext(), "Lỗi tải dữ liệu: " + response.code(), Toast.LENGTH_SHORT).show();
+                            adapter.updateData(response.body());
                         }
                     }
-
                     @Override
                     public void onFailure(Call<List<Task>> call, Throwable t) {
-                        Toast.makeText(getContext(), "Lỗi kết nối", Toast.LENGTH_SHORT).show();
+                        if (getContext() != null) Toast.makeText(getContext(), "Connection error", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
     private void showAddTaskDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle("Giao Bài Tập Mới");
+        if (getContext() == null) return;
 
-        // Inflate layout dialog_add_task.xml vừa tạo ở trên
-        View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_add_task, null);
-        final EditText edtTitle = view.findViewById(R.id.edtTaskTitle);
-        final EditText edtDeadline = view.findViewById(R.id.edtTaskDeadline);
-        final EditText edtDesc = view.findViewById(R.id.edtTaskDesc);
+        View v = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_task, null);
+        final EditText edtTitle = v.findViewById(R.id.edtTaskTitle);
+        final EditText edtDeadline = v.findViewById(R.id.edtTaskDeadline);
+        final EditText edtDesc = v.findViewById(R.id.edtTaskDesc);
+        Button btnCancel = v.findViewById(R.id.btnCancel);
+        Button btnAssign = v.findViewById(R.id.btnAssign);
 
-        builder.setView(view);
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setView(v)
+                .create();
 
-        builder.setPositiveButton("Giao Bài", (dialog, which) -> {
-            String title = edtTitle.getText().toString();
-            String deadline = edtDeadline.getText().toString();
-            String desc = edtDesc.getText().toString();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            dialog.getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        }
+
+        btnCancel.setOnClickListener(view -> dialog.dismiss());
+
+        btnAssign.setOnClickListener(view -> {
+            String title = edtTitle.getText().toString().trim();
+            String deadline = edtDeadline.getText().toString().trim();
+            String desc = edtDesc.getText().toString().trim();
 
             if (!title.isEmpty()) {
                 createTaskAPI(title, deadline, desc);
+                dialog.dismiss();
+            } else {
+                edtTitle.setError("Title is required");
             }
         });
 
-        builder.setNegativeButton("Hủy", (dialog, which) -> dialog.dismiss());
-        builder.show();
+        dialog.show();
     }
 
     private void createTaskAPI(String title, String deadline, String desc) {
@@ -138,25 +150,21 @@ public class TeacherTasksFragment extends Fragment {
         task.setTitle(title);
         task.setTime(deadline);
         task.setDescription(desc);
-        task.setCourseId(courseId); // Chú ý: Entity dùng setcourseId (chữ c thường)
+        task.setCourseId(courseId);
         task.setOwnerId(userId);
         task.setPriority(1);
 
-        // SỬA: Thêm "Bearer " trước token
         service.createTask( "Bearer " + token, task).enqueue(new Callback<List<Task>>() {
             @Override
             public void onResponse(Call<List<Task>> call, Response<List<Task>> response) {
                 if (response.isSuccessful()) {
-                    Toast.makeText(getContext(), "Đã giao bài tập!", Toast.LENGTH_SHORT).show();
-                    loadTasks(); // Load lại để thấy bài mới
-                } else {
-                    Toast.makeText(getContext(), "Lỗi: " + response.code(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Task assigned successfully!", Toast.LENGTH_SHORT).show();
+                    loadTasks();
                 }
             }
-
             @Override
             public void onFailure(Call<List<Task>> call, Throwable t) {
-                Toast.makeText(getContext(), "Lỗi mạng: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Failed to assign task", Toast.LENGTH_SHORT).show();
             }
         });
     }

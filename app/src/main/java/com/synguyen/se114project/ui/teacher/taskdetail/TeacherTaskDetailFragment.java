@@ -58,8 +58,9 @@ public class TeacherTaskDetailFragment extends Fragment {
     public static TeacherTaskDetailFragment newInstance(String taskId, String title) {
         TeacherTaskDetailFragment fragment = new TeacherTaskDetailFragment();
         Bundle args = new Bundle();
-        args.putString("TASK_ID", taskId);
-        args.putString("TASK_TITLE", title);
+        // Use lowercase keys to match nav graph and onCreateView reading
+        args.putString("taskId", taskId);
+        args.putString("taskTitle", title);
         fragment.setArguments(args);
         return fragment;
     }

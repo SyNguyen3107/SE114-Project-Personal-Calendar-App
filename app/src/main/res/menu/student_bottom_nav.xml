@@ -13,5 +13,5 @@
     <item
         android:id="@+id/communityFragment"
         android:icon="@drawable/ic_account"
-        android:title="Community" />
+        android:title="Community/Profile" />
 </menu>

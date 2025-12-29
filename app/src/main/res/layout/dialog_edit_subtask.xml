@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="24dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="8dp">
+    app:cardCornerRadius="24dp"
+    app:cardElevation="0dp"
+    app:cardBackgroundColor="@android:color/transparent">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="24dp"
+        android:background="@drawable/bg_dialog_rounded">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -22,55 +23,63 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Edit Subtasks"
-                android:textColor="@android:color/black"
+                android:textColor="@color/black"
                 android:textSize="20sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:layout_centerVertical="true"/>
 
             <ImageView
                 android:id="@+id/btn_close_dialog"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:layout_alignParentEnd="true"
+                android:padding="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@android:drawable/ic_menu_close_clear_cancel"
-                app:tint="@android:color/darker_gray" />
+                app:tint="@color/gray" />
         </RelativeLayout>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:text="Add a new task or check off the tasks you've completed"
-            android:textColor="@android:color/darker_gray"
-            android:textSize="14sp" />
-
-        <!-- Danh sách Subtask trong Dialog -->
+        <!-- Subtask List -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_dialog_subtasks"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:minHeight="100dp"
             android:maxHeight="300dp" />
 
-        <!-- Nút thêm nhanh Subtask -->
+        <!-- Add Subtask Button -->
         <TextView
             android:id="@+id/btn_dialog_add_subtask"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:layout_marginBottom="16dp"
-            android:text="+ Add Subtask"
-            android:textColor="#3F51B5"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="24dp"
+            android:text="+ Add New Subtask"
+            android:textColor="@color/holo_blue_dark"
             android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:padding="4dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"/>
 
-        <Button
-            android:id="@+id/btn_dialog_save"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:backgroundTint="#3F51B5"
-            android:text="Save"
-            android:textAllCaps="false"
-            android:textColor="@android:color/white" />
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <Button
+                android:id="@+id/btn_dialog_save"
+                android:layout_width="wrap_content"
+                android:layout_height="54dp"
+                android:minWidth="120dp"
+                android:text="Save Changes"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                android:backgroundTint="@color/holo_blue_dark" />
+        </LinearLayout>
 
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

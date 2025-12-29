@@ -22,27 +22,24 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.synguyen.se114project.R;
-import com.synguyen.se114project.data.entity.Profile; // Import Entity Profile
+import com.synguyen.se114project.data.entity.Profile;
 import com.synguyen.se114project.data.repository.ProfileRepository;
 import com.synguyen.se114project.ui.auth.LoginActivity;
+import androidx.navigation.fragment.NavHostFragment;
 
 public class ProfileFragment extends Fragment {
 
-    private TextInputEditText etName, etEmail;
+    private TextInputEditText etName, etEmail, etUserCode; // Thêm etUserCode
     private ImageView imgAvatar, btnChangeAvatar;
-    private TextView btnLogout;
+    private Button btnLogout;
     private Button btnSaveProfile;
 
     private Uri selectedImageUri = null;
-
     private ProfileRepository profileRepository;
 
-    // ====== Auth Prefs (Đã sửa cho khớp với LoginActivity & Worker) ======
-    private static final String APP_PREFS = "AppPrefs"; // Tên file thống nhất
-    private static final String KEY_ACCESS_TOKEN = "ACCESS_TOKEN"; // Key viết hoa
-    private static final String KEY_USER_ID = "USER_ID"; // Key viết hoa
-
-    // ====== Local Prefs (Lưu avatar tạm dưới máy) ======
+    private static final String APP_PREFS = "AppPrefs";
+    private static final String KEY_ACCESS_TOKEN = "ACCESS_TOKEN";
+    private static final String KEY_USER_ID = "USER_ID";
     private static final String LOCAL_PREFS = "UserProfile";
     private static final String KEY_AVATAR_URI = "KEY_AVATAR_URI";
 
@@ -52,7 +49,6 @@ public class ProfileFragment extends Fragment {
                 if (uri != null) {
                     selectedImageUri = uri;
                     imgAvatar.setImageURI(uri);
-
                     try {
                         requireContext().getContentResolver().takePersistableUriPermission(
                                 uri,
@@ -75,29 +71,34 @@ public class ProfileFragment extends Fragment {
 
         etName = view.findViewById(R.id.etName);
         etEmail = view.findViewById(R.id.etEmail);
+        etUserCode = view.findViewById(R.id.etUserCode); // Ánh xạ etUserCode
         imgAvatar = view.findViewById(R.id.imgAvatar);
         btnChangeAvatar = view.findViewById(R.id.btnChangeAvatar);
         btnSaveProfile = view.findViewById(R.id.btnSaveProfile);
         btnLogout = view.findViewById(R.id.btnLogout);
 
+        View btnBack = view.findViewById(R.id.btnBack);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> {
+                try {
+                    NavHostFragment.findNavController(ProfileFragment.this).navigateUp();
+                } catch (Exception e) {
+                    requireActivity().onBackPressed();
+                }
+            });
+        }
+
         profileRepository = new ProfileRepository();
 
-        // 1) Avatar local (demo đẹp)
         loadAvatarLocal();
-
-        // 2) Load dữ liệu từ Supabase public.profiles
         loadProfileFromSupabase();
 
-        // 3) Chọn ảnh
         btnChangeAvatar.setOnClickListener(v -> pickImageLauncher.launch("image/*"));
-
-        // 4) Save: update tên lên Supabase + lưu avatar local
         btnSaveProfile.setOnClickListener(v -> {
             saveAvatarLocal();
             updateNameToSupabase();
         });
 
-        // 5) Logout
         if (btnLogout != null) {
             btnLogout.setOnClickListener(v -> showLogoutConfirmationDialog());
         }
@@ -113,11 +114,9 @@ public class ProfileFragment extends Fragment {
     }
 
     private void handleLogout() {
-        // Xóa Token và thông tin User
         SharedPreferences authPref = requireActivity().getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE);
         authPref.edit().clear().apply();
 
-        // Điều hướng về LoginActivity
         Intent intent = new Intent(requireActivity(), LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
@@ -126,34 +125,31 @@ public class ProfileFragment extends Fragment {
         Toast.makeText(getContext(), "Logged out successfully", Toast.LENGTH_SHORT).show();
     }
 
-    // ===================== SUPABASE =====================
     private void loadProfileFromSupabase() {
-        // Dùng tên file Prefs chuẩn "AppPrefs"
         SharedPreferences authPref = requireActivity().getSharedPreferences(APP_PREFS, Context.MODE_PRIVATE);
         String token = authPref.getString(KEY_ACCESS_TOKEN, "");
         String userId = authPref.getString(KEY_USER_ID, "");
 
         if (token.isEmpty() || userId.isEmpty()) {
-            Toast.makeText(getContext(), "Bạn chưa đăng nhập (thiếu token/userId)", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Please login first", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // SỬA ĐỔI: Callback nhận vào Profile (không phải JsonObject)
         profileRepository.getProfile(token, userId, new ProfileRepository.ResultCallback<Profile>() {
             @Override
             public void onSuccess(Profile profile) {
-                if (isAdded()) { // Kiểm tra Fragment còn tồn tại không
+                if (isAdded()) {
                     requireActivity().runOnUiThread(() -> {
-                        // Dùng Getter của Object Profile
-                        String fullName = profile.getFullName();
-                        String email = profile.getEmail();
+                        etName.setText(profile.getFullName() != null ? profile.getFullName() : "");
+                        etEmail.setText(profile.getEmail() != null ? profile.getEmail() : "");
+                        
+                        // ĐỔ DỮ LIỆU USER CODE VÀO ĐÂY
+                        if (etUserCode != null) {
+                            etUserCode.setText(profile.getUserCode() != null ? profile.getUserCode() : "N/A");
+                        }
 
-                        etName.setText(fullName != null ? fullName : "");
-                        etEmail.setText(email != null ? email : "");
-
-                        // Avatar: nếu chưa chọn ảnh local thì dùng ảnh tĩnh
                         if (selectedImageUri == null) {
-                            imgAvatar.setImageResource(R.drawable.ic_launcher_background);
+                            imgAvatar.setImageResource(R.drawable.logo);
                         }
                     });
                 }
@@ -181,17 +177,14 @@ public class ProfileFragment extends Fragment {
         String token = authPref.getString(KEY_ACCESS_TOKEN, "");
         String userId = authPref.getString(KEY_USER_ID, "");
 
-        if (token.isEmpty() || userId.isEmpty()) {
-            Toast.makeText(getContext(), "Bạn chưa đăng nhập", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        if (token.isEmpty() || userId.isEmpty()) return;
 
         profileRepository.updateFullName(token, userId, newName, new ProfileRepository.ResultCallback<Void>() {
             @Override
             public void onSuccess(Void data) {
                 if (isAdded()) {
                     requireActivity().runOnUiThread(() ->
-                            Toast.makeText(getContext(), "Cập nhật thành công!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(getContext(), "Updated successfully!", Toast.LENGTH_SHORT).show()
                     );
                 }
             }
@@ -207,7 +200,6 @@ public class ProfileFragment extends Fragment {
         });
     }
 
-    // ===================== LOCAL AVATAR =====================
     private void loadAvatarLocal() {
         SharedPreferences sp = requireActivity().getSharedPreferences(LOCAL_PREFS, Context.MODE_PRIVATE);
         String savedUriString = sp.getString(KEY_AVATAR_URI, null);
@@ -217,10 +209,10 @@ public class ProfileFragment extends Fragment {
             try {
                 imgAvatar.setImageURI(selectedImageUri);
             } catch (Exception e) {
-                imgAvatar.setImageResource(R.drawable.ic_launcher_background);
+                imgAvatar.setImageResource(R.drawable.logo);
             }
         } else {
-            imgAvatar.setImageResource(R.drawable.ic_launcher_background);
+            imgAvatar.setImageResource(R.drawable.logo);
         }
     }
 

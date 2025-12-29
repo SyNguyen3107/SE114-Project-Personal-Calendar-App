@@ -192,7 +192,7 @@ public class StudentTaskDetailFragment extends Fragment {
                 try {
                     Navigation.findNavController(v).navigateUp();
                 } catch (Exception e) {
-                    if (getActivity() != null) getActivity().onBackPressed();
+                    if (getActivity() != null) requireActivity().getOnBackPressedDispatcher().onBackPressed();
                 }
             }
         });

@@ -63,7 +63,7 @@ public class MaterialAdapter extends RecyclerView.Adapter<MaterialAdapter.Materi
 
             // Format ngày tháng hoặc size nếu có (tạm thời để cứng hoặc lấy từ API nếu có field created_at)
             // String meta = "Size: " + file.getMetadata().getSize();
-            tvSize.setText("Tài liệu khóa học");
+            tvSize.setText("Course Material");
 
             btnDownload.setOnClickListener(v -> {
                 if (mListener != null) mListener.onDownloadClick(file);

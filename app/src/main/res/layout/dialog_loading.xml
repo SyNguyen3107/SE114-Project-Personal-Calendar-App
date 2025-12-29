@@ -17,7 +17,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
-        android:text="Đang xử lý..."
+        android:text="Processing ..."
         android:textSize="16sp"
         android:textColor="#000000"/>
 </LinearLayout>

@@ -9,7 +9,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Tài liệu môn học"
+        android:text="Course Materials"
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="@color/black"
@@ -32,7 +32,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tải lên tài liệu PDF cho sinh viên"
+            android:text="Upload Material for Students"
             android:layout_marginTop="8dp"
             android:textColor="#757575"/>
 
@@ -40,8 +40,9 @@
             android:id="@+id/btnUploadMaterial"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Chọn &amp; Upload PDF"
+            android:text="Upload PDF files"
             android:backgroundTint="#2196F3"
+            android:background="@color/holo_blue_dark"
             android:textColor="@android:color/white"
             android:layout_marginTop="16dp"/>
 
@@ -56,7 +57,7 @@
             android:id="@+id/tvStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Đang tải lên 0%..."
+            android:text="Processing..."
             android:visibility="gone"
             android:layout_marginTop="4dp"/>
     </LinearLayout>
@@ -64,7 +65,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Danh sách file"
+        android:text="File lists"
         android:layout_marginTop="24dp"
         android:textStyle="bold"/>
 

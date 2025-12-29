@@ -10,6 +10,12 @@ public class AuthResponse {
     @SerializedName("token_type")
     public String tokenType;
 
+    @SerializedName("refresh_token")
+    public String refreshToken; // refresh token may be at root for grant_type=password responses
+
+    @SerializedName("expires_in")
+    public Integer expiresIn;
+
     @SerializedName("user")
     public UserObj user;
 
@@ -43,12 +49,25 @@ public class AuthResponse {
         @SerializedName("token_type")
         public String token_type;
 
+        @SerializedName("refresh_token")
+        public String refresh_token;
+
+        @SerializedName("expires_in")
+        public Integer expires_in;
+
         @SerializedName("user")
         public UserObj user;
     }
 
     // --- HELPER METHODS (QUAN TRỌNG) ---
 
+    // 4. Lấy refresh token an toàn (nếu có)
+    public String getRefreshToken() {
+        // Prefer root-level refresh_token (login response), fallback to session.refresh_token (signup response)
+        if (refreshToken != null && !refreshToken.isEmpty()) return refreshToken;
+        if (session != null && session.refresh_token != null) return session.refresh_token;
+        return null;
+    }
     // 1. Hàm getUser() mà AuthRepository đang cần gọi
     public UserObj getUser() {
         // Ưu tiên 1: Tìm User ở root (Login)

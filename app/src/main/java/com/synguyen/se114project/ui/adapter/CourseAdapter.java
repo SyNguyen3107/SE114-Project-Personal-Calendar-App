@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.chip.Chip;
 import com.synguyen.se114project.R;
 import com.synguyen.se114project.data.entity.Course;
 
@@ -33,13 +34,11 @@ public class CourseAdapter extends ListAdapter<Course, CourseAdapter.CourseViewH
     private static final DiffUtil.ItemCallback<Course> DIFF_CALLBACK = new DiffUtil.ItemCallback<Course>() {
         @Override
         public boolean areItemsTheSame(@NonNull Course oldItem, @NonNull Course newItem) {
-            // So sánh ID để xác định có phải cùng một item không
             return Objects.equals(oldItem.getId(), newItem.getId());
         }
 
         @Override
         public boolean areContentsTheSame(@NonNull Course oldItem, @NonNull Course newItem) {
-            // So sánh nội dung để biết có cần vẽ lại UI không
             return Objects.equals(oldItem.getName(), newItem.getName()) &&
                     Objects.equals(oldItem.getDescription(), newItem.getDescription()) &&
                     Objects.equals(oldItem.getTeacherName(), newItem.getTeacherName()) &&
@@ -64,53 +63,42 @@ public class CourseAdapter extends ListAdapter<Course, CourseAdapter.CourseViewH
     }
 
     static class CourseViewHolder extends RecyclerView.ViewHolder {
-        // Khai báo View theo ID mới trong item_course.xml
         private final TextView tvName;
         private final TextView tvDesc;
-        private final TextView tvTime;
+        private final Chip chipTime; // Updated to Chip
         private final TextView tvTeacher;
-        private final MaterialCardView cardContainer; // Dùng CardView để set màu nền
+        private final MaterialCardView cardContainer;
 
         public CourseViewHolder(@NonNull View itemView) {
             super(itemView);
-            // Ánh xạ ID khớp với file XML item_course.xml vừa tạo
             tvName = itemView.findViewById(R.id.tv_course_name);
             tvDesc = itemView.findViewById(R.id.tv_course_description);
-            tvTime = itemView.findViewById(R.id.tv_course_time);
+            chipTime = itemView.findViewById(R.id.chip_time); // Match ID in item_course.xml
             tvTeacher = itemView.findViewById(R.id.tv_teacher_name);
             cardContainer = itemView.findViewById(R.id.card_course_container);
         }
 
         public void bind(Course course, OnItemClickListener listener) {
-            // 1. Tên môn học
             tvName.setText(course.getName());
 
-            // 2. Mô tả (Nếu null thì hiện chuỗi rỗng)
             String desc = course.getDescription() != null ? course.getDescription() : "No description available";
             tvDesc.setText(desc);
 
-            // 3. Thời gian học (Nếu null thì hiện TBA)
+            // Set text to the Chip
             String time = course.getTimeSlot() != null ? course.getTimeSlot() : "TBA";
-            tvTime.setText(time);
+            if (chipTime != null) chipTime.setText(time);
 
-            // 4. Tên giáo viên
             String teacher = course.getTeacherName() != null ? course.getTeacherName() : "Unknown Instructor";
             tvTeacher.setText(teacher);
 
-            // 5. Xử lý Màu nền (Hex Color)
+            // Handle color background logic
             try {
                 if (course.getColorHex() != null && !course.getColorHex().isEmpty()) {
-                    cardContainer.setCardBackgroundColor(Color.parseColor(course.getColorHex()));
-                } else {
-                    // Nếu không có màu, gán màu mặc định (Xanh) hoặc Hash theo ID để mỗi course có 1 màu cố định
-                    cardContainer.setCardBackgroundColor(Color.parseColor("#1565C0"));
+                    // For modern look, we might keep background white and use color for accent
+                    // cardContainer.setCardBackgroundColor(Color.parseColor(course.getColorHex()));
                 }
-            } catch (IllegalArgumentException e) {
-                // Fallback nếu mã màu sai định dạng
-                cardContainer.setCardBackgroundColor(Color.parseColor("#1565C0"));
-            }
+            } catch (Exception ignored) {}
 
-            // 6. Sự kiện click
             itemView.setOnClickListener(v -> listener.onItemClick(course));
         }
     }

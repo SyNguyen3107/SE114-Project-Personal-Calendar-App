@@ -50,8 +50,24 @@ public class AuthRepository {
             @Override
             public void onResponse(Call<AuthResponse> call, Response<AuthResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
+                    AuthResponse authData = response.body();
+                    // DEBUG: Log all token fields to diagnose refresh token issue
+                    android.util.Log.d("AuthRepository", "=== LOGIN RESPONSE DEBUG ===");
+                    android.util.Log.d("AuthRepository", "Root refreshToken field: " + 
+                        (authData.refreshToken != null ? (authData.refreshToken.length() + " chars") : "NULL"));
+                    android.util.Log.d("AuthRepository", "Session object: " + (authData.session != null ? "present" : "NULL"));
+                    if (authData.session != null) {
+                        android.util.Log.d("AuthRepository", "Session.refresh_token: " + 
+                            (authData.session.refresh_token != null ? (authData.session.refresh_token.length() + " chars") : "NULL"));
+                    }
+                    String rt = authData.getRefreshToken();
+                    android.util.Log.d("AuthRepository", "getRefreshToken() result: " + 
+                        (rt != null ? (rt.length() + " chars, preview: " + rt.substring(0, Math.min(10, rt.length())) + "...") : "NULL"));
+                    android.util.Log.d("AuthRepository", "accessToken length: " + 
+                        (authData.getAccessToken() != null ? authData.getAccessToken().length() : 0));
+                    android.util.Log.d("AuthRepository", "=== END DEBUG ===");
                     // Trả về AuthResponse (chứa Token và User info)
-                    callback.onSuccess(response.body());
+                    callback.onSuccess(authData);
                 } else {
                     // Xử lý lỗi (sai pass, email không tồn tại...)
                     callback.onError("Đăng nhập thất bại (" + response.code() + "). Vui lòng kiểm tra lại Email/Pass.");
@@ -66,7 +82,7 @@ public class AuthRepository {
     }
 
     // ================= 2. SIGN UP FLOW (GIỮ NGUYÊN) =================
-    public void signUpAndCreateProfile(String email, String password, String fullName, ResultCallback<SignUpResult> callback) {
+    public void signUpAndCreateProfile(String email, String password, String fullName, String role, ResultCallback<SignUpResult> callback) {
         // Bước 1: Sign up Auth
         JsonObject body = new JsonObject();
         body.addProperty("email", email);
@@ -76,7 +92,27 @@ public class AuthRepository {
             @Override
             public void onResponse(Call<AuthResponse> call, Response<AuthResponse> response) {
                 if (!response.isSuccessful() || response.body() == null) {
-                    callback.onError("Sign up failed: " + response.code());
+                    String errMsg = "Sign up failed: " + response.code();
+                    try {
+                        if (response.errorBody() != null) {
+                            String errBody = response.errorBody().string();
+                            android.util.Log.e("AuthRepository", "signUp errorBody: " + errBody);
+                            try {
+                                com.google.gson.JsonObject jo = com.google.gson.JsonParser.parseString(errBody).getAsJsonObject();
+                                if (jo.has("msg")) errMsg = jo.get("msg").getAsString();
+                                else if (jo.has("message")) {
+                                    com.google.gson.JsonElement m = jo.get("message");
+                                    if (m.isJsonArray()) errMsg = m.getAsJsonArray().toString();
+                                    else errMsg = m.getAsString();
+                                } else errMsg = errBody;
+                            } catch (Exception ex) {
+                                errMsg = errBody;
+                            }
+                        }
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                    callback.onError(errMsg);
                     return;
                 }
 
@@ -99,7 +135,7 @@ public class AuthRepository {
                 profile.setFullName(fullName);
                 profile.setEmail(email);
                 profile.setAvatarUrl("default_avatar.png");
-                profile.setRole("student");
+                profile.setRole(role == null || role.isEmpty() ? "student" : role);
                 String randomCode = String.valueOf(System.currentTimeMillis() % 100000000);
                 profile.setUserCode("SV" + randomCode);
 
@@ -110,7 +146,27 @@ public class AuthRepository {
                     @Override
                     public void onResponse(Call<Void> call, Response<Void> response) {
                         if (!response.isSuccessful()) {
-                            callback.onError("Tạo profile thất bại: " + response.code());
+                            String errMsg = "Tạo profile thất bại: " + response.code();
+                            try {
+                                if (response.errorBody() != null) {
+                                    String errBody = response.errorBody().string();
+                                    android.util.Log.e("AuthRepository", "insertProfile errorBody: " + errBody);
+                                    try {
+                                        com.google.gson.JsonObject jo = com.google.gson.JsonParser.parseString(errBody).getAsJsonObject();
+                                        if (jo.has("message")) {
+                                            com.google.gson.JsonElement m = jo.get("message");
+                                            if (m.isJsonArray()) errMsg = m.getAsJsonArray().toString();
+                                            else errMsg = m.getAsString();
+                                        } else if (jo.has("msg")) errMsg = jo.get("msg").getAsString();
+                                        else errMsg = errBody;
+                                    } catch (Exception ex) {
+                                        errMsg = errBody;
+                                    }
+                                }
+                            } catch (Exception e) {
+                                // ignore
+                            }
+                            callback.onError(errMsg);
                             return;
                         }
                         // Thành công
@@ -127,6 +183,75 @@ public class AuthRepository {
             @Override
             public void onFailure(Call<AuthResponse> call, Throwable t) {
                 callback.onError("Lỗi đăng ký: " + t.getMessage());
+            }
+        });
+    }
+
+    // ================= 3. REFRESH ACCESS TOKEN =================
+    /**
+     * Try to refresh access token using refresh_token stored in SharedPreferences.
+     * On success, stores new ACCESS_TOKEN and REFRESH_TOKEN back to prefs and returns the new access token.
+     */
+    public void refreshAccessToken(android.content.Context ctx, ResultCallback<String> callback) {
+        android.content.SharedPreferences prefs = ctx.getSharedPreferences("AppPrefs", android.content.Context.MODE_PRIVATE);
+        String refreshToken = prefs.getString("REFRESH_TOKEN", null);
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            android.util.Log.e("AuthRepository", "refreshAccessToken: no REFRESH_TOKEN in prefs");
+            callback.onError("Missing refresh token");
+            return;
+        }
+
+        // Supabase refresh tokens can be short (12+ chars) in newer versions
+        android.util.Log.d("AuthRepository", "refreshAccessToken: using refreshToken of " + refreshToken.length() + " chars");
+
+        supabaseService.refreshToken("refresh_token", refreshToken).enqueue(new Callback<com.google.gson.JsonObject>() {
+            @Override
+            public void onResponse(Call<com.google.gson.JsonObject> call, Response<com.google.gson.JsonObject> response) {
+                android.util.Log.d("AuthRepository", "refreshAccessToken: response code=" + response.code());
+                try {
+                    if (!response.isSuccessful()) {
+                        String err = "";
+                        try { if (response.errorBody() != null) err = response.errorBody().string(); } catch (Exception ex) { err = "<no body>"; }
+                        android.util.Log.e("AuthRepository", "refreshAccessToken failed: " + err);
+                        
+                        // On 400/401, the refresh token is invalid - clear all tokens to force re-login
+                        if (response.code() == 400 || response.code() == 401) {
+                            android.util.Log.w("AuthRepository", "Refresh token rejected. Clearing all tokens.");
+                            prefs.edit()
+                                .remove("ACCESS_TOKEN")
+                                .remove("REFRESH_TOKEN")
+                                .remove("USER_ID")
+                                .remove("USER_ROLE")
+                                .apply();
+                        }
+                        callback.onError("Failed to refresh token: " + response.code());
+                        return;
+                    }
+
+                    com.google.gson.JsonObject jo = response.body();
+                    android.util.Log.d("AuthRepository", "refreshAccessToken success body=" + (jo == null ? "null" : jo.toString()));
+                    String newAccess = jo.has("access_token") ? jo.get("access_token").getAsString() : null;
+                    String newRefresh = jo.has("refresh_token") ? jo.get("refresh_token").getAsString() : null;
+                    if (newAccess == null) {
+                        android.util.Log.e("AuthRepository", "refreshAccessToken: missing access_token in body");
+                        callback.onError("No access_token in refresh response");
+                        return;
+                    }
+                    // Save new tokens
+                    prefs.edit().putString("ACCESS_TOKEN", newAccess).apply();
+                    if (newRefresh != null) prefs.edit().putString("REFRESH_TOKEN", newRefresh).apply();
+                    android.util.Log.d("AuthRepository", "refreshAccessToken: stored new access token (masked): " + (newAccess.length()>8 ? newAccess.substring(0,4)+"..."+newAccess.substring(newAccess.length()-4) : newAccess));
+                    callback.onSuccess(newAccess);
+                } catch (Exception e) {
+                    android.util.Log.e("AuthRepository", "refreshAccessToken parse error", e);
+                    callback.onError("Refresh parse error: " + e.getMessage());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<com.google.gson.JsonObject> call, Throwable t) {
+                android.util.Log.e("AuthRepository", "refreshAccessToken network failure", t);
+                callback.onError("Refresh failed: " + t.getMessage());
             }
         });
     }

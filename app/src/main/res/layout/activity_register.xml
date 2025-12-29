@@ -25,7 +25,7 @@
                 android:layout_height="80dp"
                 android:layout_gravity="center"
                 android:scaleType="fitCenter"
-                android:src="@drawable/logo_school" />
+                android:src="@drawable/logo" />
         </FrameLayout>
 
         <TextView
@@ -34,7 +34,7 @@
             android:layout_marginTop="16dp"
             android:gravity="center"
             android:text="Create Account"
-            android:textColor="#333333"
+            android:textColor="@color/holo_blue_dark"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -81,12 +81,48 @@
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <TextView
+            android:id="@+id/tvRoleLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Role"
+            android:textColor="#555555"
+            android:textSize="14sp" />
+
+        <RadioGroup
+            android:id="@+id/rgRole"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical">
+
+            <RadioButton
+                android:id="@+id/rbStudent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Student"
+                android:checked="true"
+                android:buttonTint="@color/holo_blue_dark"
+                app:buttonTint="@color/holo_blue_dark" />
+
+            <RadioButton
+                android:id="@+id/rbTeacher"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:text="Teacher"
+                android:buttonTint="@color/holo_blue_dark"
+                app:buttonTint="@color/holo_blue_dark"/>
+        </RadioGroup>
+
         <Button
             android:id="@+id/btnRegister"
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:layout_marginTop="24dp"
-            android:backgroundTint="#1976D2"
+            android:backgroundTint="@color/holo_blue_dark"
             android:text="Sign Up"
             android:textAllCaps="false"
             android:textSize="16sp"

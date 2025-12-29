@@ -27,8 +27,7 @@ public class RetrofitClient {
             Interceptor headerInterceptor = chain -> {
                 Request original = chain.request();
                 Request.Builder builder = original.newBuilder()
-                        .header("apikey", BuildConfig.SUPABASE_KEY) // BẮT BUỘC PHẢI CÓ
-                        .header("Content-Type", "application/json");
+                        .header("apikey", BuildConfig.SUPABASE_KEY); // BẮT BUỘC PHẢI CÓ
                 return chain.proceed(builder.build());
             };
 

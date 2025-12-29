@@ -102,7 +102,7 @@ public class TeacherStudentsFragment extends Fragment {
 
                             // 1. Cập nhật số lượng
                             if (tvStudentCount != null) {
-                                tvStudentCount.setText(mListProfile.size() + " sinh viên");
+                                tvStudentCount.setText(mListProfile.size() + " students");
                             }
 
                             // 2. Cập nhật Adapter

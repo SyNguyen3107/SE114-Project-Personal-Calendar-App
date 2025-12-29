@@ -29,6 +29,7 @@ public class CourseRepository {
     private final CourseDao mCourseDao;
     private final SupabaseService mSupabaseService;
     private final SharedPreferences mPrefs;
+    private final Context mContext;
     // Executor riêng cho các tác vụ mạng (Network operations)
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -41,6 +42,7 @@ public class CourseRepository {
         mCourseDao = db.courseDao();
         mTaskDao = db.taskDao();
         mPrefs = application.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE);
+        mContext = application.getApplicationContext();
 
         // Khởi tạo LiveData từ Room (để hiển thị lên UI)
         mAllCourses = mCourseDao.getAllCourses();
@@ -89,6 +91,11 @@ public class CourseRepository {
      * @param studentId ID của sinh viên cần lấy danh sách lớp.
      */
     public void syncStudentCourses(String studentId) {
+        // Kick off sync in background and allow one retry on 401 via refresh token
+        syncStudentCoursesInternal(studentId, /*retryOn401*/ true);
+    }
+
+    private void syncStudentCoursesInternal(String studentId, boolean retryOn401) {
         executor.execute(() -> {
             try {
                 // 1. Lấy Token xác thực (vẫn lấy từ Prefs vì nó thuộc về session đăng nhập)
@@ -125,27 +132,40 @@ public class CourseRepository {
                     List<Course> courses = response.body();
 
                     // --- XỬ LÝ DATABASE LOCAL ---
-                    // Bước 1: Xóa sạch dữ liệu cũ để tránh trùng lặp hoặc dữ liệu rác
-                    // Lưu ý: Nếu muốn hỗ trợ offline tốt hơn hoặc nhiều user, logic này cần tinh chỉnh.
                     mCourseDao.deleteAllCourses();
                     Log.d("SYNC_COURSE", "Đã xóa cache cũ.");
 
-                    // Bước 2: Lưu dữ liệu mới sạch sẽ từ Server
                     if (!courses.isEmpty()) {
                         for (Course c : courses) {
                             c.setSynced(true); // Data từ server về mặc định là đã sync
                             c.setDeleted(false);
-                            // c.setStudentId(studentId); // Nếu entity có trường này thì set ở đây
                         }
                         mCourseDao.insertCourses(courses);
                     }
 
                     Log.d("SYNC_COURSE", "Đã cập nhật " + courses.size() + " lớp học từ Server.");
+                } else if (response.code() == 401 && retryOn401) {
+                    // Try to refresh access token once
+                    Log.w("SYNC_COURSE", "Received 401, attempting to refresh access token and retry.");
+                    // Use AuthRepository to refresh token (async) and retry
+                    new AuthRepository().refreshAccessToken(mContext, new AuthRepository.ResultCallback<String>() {
+                        @Override
+                        public void onSuccess(String newToken) {
+                            // Update prefs already done in AuthRepository; retry once with new token
+                            Log.d("SYNC_COURSE", "Token refreshed, retrying sync.");
+                            syncStudentCoursesInternal(studentId, false);
+                        }
+
+                        @Override
+                        public void onError(String message) {
+                            Log.e("SYNC_COURSE", "Refresh token failed: " + message);
+                        }
+                    });
                 } else {
                     Log.e("SYNC_COURSE", "Lỗi API: " + response.code() + " - " + response.message());
-                    if (response.errorBody() != null) {
-                        Log.e("SYNC_COURSE", "Error Body: " + response.errorBody().string());
-                    }
+                    try {
+                        if (response.errorBody() != null) Log.e("SYNC_COURSE", "Error Body: " + response.errorBody().string());
+                    } catch (Exception ex) { /* ignore */ }
                 }
 
             } catch (Exception e) {

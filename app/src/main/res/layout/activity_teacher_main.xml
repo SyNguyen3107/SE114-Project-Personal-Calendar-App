@@ -24,6 +24,9 @@
         android:background="#FFFFFF"
         app:menu="@menu/teacher_bottom_nav"
         app:layout_constraintBottom_toBottomOf="parent" />
+
+
+
     <FrameLayout
         android:id="@+id/fragment_container_full"
         android:layout_width="match_parent"

@@ -88,9 +88,9 @@ public class StudentCourseDetailFragment extends Fragment {
             // Liên kết TabLayout với ViewPager
             new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
                 switch (position) {
-                    case 0: tab.setText("Bài tập"); break;
-                    case 1: tab.setText("Tài liệu"); break;
-                    case 2: tab.setText("Thành viên"); break;
+                    case 0: tab.setText("Task"); break;
+                    case 1: tab.setText("References"); break;
+                    case 2: tab.setText("Members"); break;
                 }
             }).attach();
         }

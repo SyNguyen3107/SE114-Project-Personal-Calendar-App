@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,6 +21,7 @@ public class RegisterActivity extends AppCompatActivity {
     private Button btnRegister;
     private TextView tvLoginLink;
     private ProgressBar progressBar;
+    private RadioGroup rgRole;
 
     private AuthRepository authRepository;
 
@@ -35,6 +37,7 @@ public class RegisterActivity extends AppCompatActivity {
         btnRegister = findViewById(R.id.btnRegister);
         tvLoginLink = findViewById(R.id.tvLoginLink); // Nút "Đã có tài khoản? Đăng nhập"
         progressBar = findViewById(R.id.progressBarRegister);
+        rgRole = findViewById(R.id.rgRole);
 
         // 2. Khởi tạo Repository
         authRepository = new AuthRepository();
@@ -78,8 +81,15 @@ public class RegisterActivity extends AppCompatActivity {
         // --- GỌI API ---
         setLoading(true);
 
+        // Determine role selection (default: student)
+        String role = "student";
+        if (rgRole != null) {
+            int sel = rgRole.getCheckedRadioButtonId();
+            if (sel == R.id.rbTeacher) role = "teacher";
+        }
+
         // Gọi hàm signUpAndCreateProfile từ AuthRepository
-        authRepository.signUpAndCreateProfile(email, password, fullName, new AuthRepository.ResultCallback<AuthRepository.SignUpResult>() {
+        authRepository.signUpAndCreateProfile(email, password, fullName, role, new AuthRepository.ResultCallback<AuthRepository.SignUpResult>() {
             @Override
             public void onSuccess(AuthRepository.SignUpResult data) {
                 setLoading(false);

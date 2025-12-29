@@ -8,6 +8,9 @@
 
     <application
         android:allowBackup="true"
+        
+        android:usesCleartextTraffic="true"
+
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -38,6 +41,14 @@
             android:name=".ui.teacher.main.TeacherMainActivity"
             android:exported="false"
             android:label="@string/app_name" />
+
+        <activity
+            android:name=".ui.community.CommunityListActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.community.CommunityChatActivity"
+            android:exported="false" />
 
     </application>
 

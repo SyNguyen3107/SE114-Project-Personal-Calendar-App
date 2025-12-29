@@ -17,55 +17,45 @@ import java.util.Locale;
 
 public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentViewHolder> {
 
-    private List<Profile> originalList; // Giữ data gốc để backup khi search
-    private List<Profile> studentList;  // Data đang hiển thị
+    private List<Profile> originalList;
+    private List<Profile> studentList;
 
     public StudentAdapter(List<Profile> studentList) {
         this.originalList = (studentList != null) ? studentList : new ArrayList<>();
-        this.studentList = new ArrayList<>(this.originalList); // Copy data sang list hiển thị
+        this.studentList = new ArrayList<>(this.originalList);
     }
 
-    /**
-     * Cập nhật data mới từ API/Database
-     */
     public void updateData(List<Profile> newList) {
         this.originalList = (newList != null) ? newList : new ArrayList<>();
-        this.studentList = new ArrayList<>(this.originalList); // Reset lại list hiển thị
+        this.studentList = new ArrayList<>(this.originalList);
         notifyDataSetChanged();
     }
 
-    /**
-     * Hàm tìm kiếm (Lọc danh sách)
-     * Gọi hàm này từ SearchView trong Activity/Fragment
-     * @param query: Chuỗi từ khóa người dùng nhập
-     */
     public void searchStudents(String query) {
         if (query == null || query.trim().isEmpty()) {
-            // Nếu ô tìm kiếm rỗng, hiển thị lại toàn bộ danh sách gốc
             studentList = new ArrayList<>(originalList);
         } else {
             List<Profile> filteredList = new ArrayList<>();
             String lowerCaseQuery = query.toLowerCase(Locale.getDefault());
 
             for (Profile student : originalList) {
-                // Kiểm tra null trước khi so sánh
                 String name = (student.getFullName() != null) ? student.getFullName().toLowerCase() : "";
                 String mssv = (student.getUserCode() != null) ? student.getUserCode().toLowerCase() : "";
                 String email = (student.getEmail() != null) ? student.getEmail().toLowerCase() : "";
 
-                // Logic tìm kiếm: Tìm theo Tên HOẶC MSSV HOẶC Email
                 if (name.contains(lowerCaseQuery) || mssv.contains(lowerCaseQuery) || email.contains(lowerCaseQuery)) {
                     filteredList.add(student);
                 }
             }
             studentList = filteredList;
         }
-        notifyDataSetChanged(); // Cập nhật lại giao diện
+        notifyDataSetChanged();
     }
 
     @NonNull
     @Override
     public StudentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        // Sử dụng item_student.xml mới đã được thiết kế lại
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_student, parent, false);
         return new StudentViewHolder(view);
     }
@@ -75,22 +65,21 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.StudentV
         Profile student = studentList.get(position);
         if (student == null) return;
 
-        // 1. Tên
+        // 1. Tên sinh viên
         String name = student.getFullName();
-        holder.tvName.setText((name != null && !name.isEmpty()) ? name : "Chưa cập nhật tên");
+        holder.tvName.setText((name != null && !name.isEmpty()) ? name : "No Name");
 
         // 2. Email
-        holder.tvEmail.setText(student.getEmail() != null ? student.getEmail() : "");
+        holder.tvEmail.setText(student.getEmail() != null ? student.getEmail() : "No Email");
 
-        // 3. User Code (MSSV)
+        // 3. MSSV / User Code
         if (student.getUserCode() != null && !student.getUserCode().isEmpty()) {
             holder.tvCode.setText("MSSV: " + student.getUserCode());
-            holder.tvCode.setVisibility(View.VISIBLE);
         } else {
-            holder.tvCode.setVisibility(View.GONE);
+            holder.tvCode.setText("MSSV: N/A");
         }
 
-        // 4. Avatar chữ cái đầu
+        // 4. Avatar (Chữ cái đầu)
         if (name != null && !name.isEmpty()) {
             String firstChar = String.valueOf(name.charAt(0)).toUpperCase();
             holder.tvAvatar.setText(firstChar);
